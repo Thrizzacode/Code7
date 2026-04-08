@@ -100,6 +100,10 @@ const SyncController = {
 
       if (res.success) {
         Utils.showToast(`${currentProject.name} 更新成功！`, 'success');
+        
+        // Refresh versions to reflect folder changes on disk
+        await BranchSelector.refreshVersions();
+
         // Refresh revisions only if selection is complete
         if (paths.sourceUrl && paths.targetWcPath) {
           RevisionPicker.loadRevisions(paths.sourceUrl, paths.targetWcPath);

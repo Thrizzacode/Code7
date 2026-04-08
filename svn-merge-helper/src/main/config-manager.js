@@ -216,7 +216,15 @@ const ConfigManager = {
    * @param {string} env - The target environment key (e.g. 'qat')
    * @returns {string[]} List of version names
    */
-  getEnvVersions(wcRoot, templates, env) {
+  /**
+   * Expose dynamic branch detection for the renderer (BranchSelector).
+   * Hybrid mode: Queries both remote SVN and local filesystem.
+   * @param {string} wcRoot - Working copy root path
+   * @param {object} templates - All path templates for the project
+   * @param {string} env - The target environment key (e.g. 'qat')
+   * @returns {Promise<Array<{version: string, presentLocally: boolean}>>}
+   */
+  async getEnvVersions(wcRoot, templates, env) {
     const pathTemplate = templates && templates[env];
     if (!wcRoot || !pathTemplate || !pathTemplate.includes('{version}')) {
       return [];
@@ -225,53 +233,88 @@ const ConfigManager = {
     const prefixPath = pathTemplate.split('{version}')[0];
     const lastSlashIndex = prefixPath.lastIndexOf('/');
     
-    let targetDir = wcRoot;
+    let subDir = '';
     let prefix = prefixPath;
     
     if (lastSlashIndex !== -1) {
-      targetDir = path.join(wcRoot, prefixPath.substring(0, lastSlashIndex));
+      subDir = prefixPath.substring(0, lastSlashIndex);
       prefix = prefixPath.substring(lastSlashIndex + 1);
     }
 
-    if (!fs.existsSync(targetDir)) {
-      return [];
-    }
+    const targetDir = path.join(wcRoot, subDir);
+    const config = this.load();
+    const project = config.projects.find(p => p.workingCopyRoot === wcRoot);
+    const baseUrl = project ? project.repoUrl : null;
 
-    // Find other prefixes in the SAME directory that are LONGER than this one
-    // e.g. '05-Code-Stage-' is longer than '05-Code-'
-    const otherPrefixes = Object.keys(templates)
+    // 1. Pre-calculate other prefixes that should be excluded from this env
+    // (e.g., if env is 'qat', we exclude '05-Code-Stage-' prefix from 'stg')
+    const otherPrefixes = Object.keys(templates || {})
       .filter(k => k !== env)
       .map(k => templates[k].split('{version}')[0])
       .filter(p => {
         const pLastSlash = p.lastIndexOf('/');
         const pDir = pLastSlash !== -1 ? p.substring(0, pLastSlash) : '';
         const pPrefix = pLastSlash !== -1 ? p.substring(pLastSlash + 1) : p;
-        return pDir === (lastSlashIndex !== -1 ? prefixPath.substring(0, lastSlashIndex) : '') 
-               && pPrefix.startsWith(prefix) 
-               && pPrefix.length > prefix.length;
+        // Prefix must be in the same subDir, start with our prefix, and be longer
+        return pDir === subDir && pPrefix.startsWith(prefix) && pPrefix.length > prefix.length;
       })
       .map(p => {
         const pLastSlash = p.lastIndexOf('/');
         return pLastSlash !== -1 ? p.substring(pLastSlash + 1) : p;
       });
 
-    try {
-      const entries = fs.readdirSync(targetDir, { withFileTypes: true });
-      return entries
+    // 2. Fetch Remote Versions
+    const remotePromise = (async () => {
+      if (!baseUrl) return [];
+      const SvnBridge = getSvnBridge();
+      const remotePath = `${baseUrl}/${subDir}`;
+      const res = await SvnBridge.list(remotePath.replace(/\/$/, ''));
+      if (!res.success) return [];
+      
+      return res.entries
         .filter(e => {
-          if (!e.isDirectory() || !e.name.startsWith(prefix) || e.name === '.svn') return false;
-          
+          if (e.kind !== 'dir' || !e.name.startsWith(prefix)) return false;
           // Must not match any longer prefix from another environment
-          for (const otherPrefix of otherPrefixes) {
-            if (e.name.startsWith(otherPrefix)) return false;
+          for (const other of otherPrefixes) {
+            if (e.name.startsWith(other)) return false;
           }
           return true;
         })
-        .map(e => e.name.slice(prefix.length))
-        .filter(v => v.length > 0);
-    } catch {
-      return [];
+        .map(e => e.name.slice(prefix.length));
+    })();
+
+    // 3. Fetch Local Versions
+    const localVersions = [];
+    if (fs.existsSync(targetDir)) {
+      try {
+        const entries = fs.readdirSync(targetDir, { withFileTypes: true });
+        entries.forEach(e => {
+          if (!e.isDirectory() || !e.name.startsWith(prefix) || e.name === '.svn') return;
+          // Must not match any longer prefix from another environment
+          for (const otherPrefix of otherPrefixes) {
+            if (e.name.startsWith(otherPrefix)) return;
+          }
+          localVersions.push(e.name.slice(prefix.length));
+        });
+      } catch {
+        // Ignore local read errors
+      }
     }
+
+    const remoteVersions = await remotePromise;
+    const remoteSet = new Set(remoteVersions);
+    const localSet = new Set(localVersions);
+
+    // 4. Merge and mark status
+    const allVersions = Array.from(new Set([...remoteVersions, ...localVersions]));
+    
+    return allVersions
+      .map(v => ({
+        version: v,
+        presentLocally: localSet.has(v),
+        presentRemotely: remoteSet.has(v)
+      }))
+      .sort((a, b) => a.version.localeCompare(b.version, undefined, { numeric: true, sensitivity: 'base' }));
   },
 
   /**

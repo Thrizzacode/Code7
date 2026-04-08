@@ -87,6 +87,10 @@ function registerIpcHandlers() {
     return SvnBridge.update(wcPath);
   });
 
+  ipcMain.handle("svn:ensure-local-path", async (_event, wcPath) => {
+    return SvnBridge.ensureLocalPath(wcPath);
+  });
+
   ipcMain.handle("svn:update-batch", async (_event, paths) => {
     const results = [];
     for (let i = 0; i < paths.length; i++) {

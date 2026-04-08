@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.3.0] - 2026-04-08
+
+### Added
+- **更新檢查反饋**：手動點擊「檢查更新」且已是最新版本時，新增 Toast 提示訊息，優化使用者互動體驗。
+
 ## [1.2.0] - 2026-04-08
 
 ### Added

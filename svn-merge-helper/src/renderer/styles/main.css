@@ -469,6 +469,61 @@ html, body {
   color: var(--success);
 }
 
+.resolved-path.warning {
+  color: var(--warning);
+  background: var(--warning-soft);
+  border: 1px solid rgba(251, 191, 36, 0.3);
+}
+
+.remote-version {
+  color: var(--text-muted) !important;
+  font-style: italic;
+}
+
+/* ─── Sync Button ─── */
+.sync-action-container {
+  margin-top: var(--space-sm);
+  display: flex;
+  justify-content: flex-end;
+  min-height: 38px;
+}
+
+.btn-sync-local {
+  background: var(--success-soft);
+  color: var(--success);
+  border: 1px solid rgba(52, 211, 153, 0.3);
+  padding: var(--space-xs) var(--space-md);
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  animation: fadeIn var(--transition-normal);
+}
+
+.btn-sync-local:hover:not(:disabled) {
+  background: var(--success);
+  color: var(--text-inverse);
+  box-shadow: 0 0 12px var(--success-soft);
+}
+
+.btn-sync-local.loading {
+  opacity: 0.8;
+  cursor: wait;
+  pointer-events: none;
+}
+
+.btn-sync-local.loading .sync-icon {
+  animation: spin 1s linear infinite;
+}
+
+.sync-icon {
+  font-size: 14px;
+}
+
 /* ─── Warning Bar ─── */
 .warning-bar {
   display: flex;
@@ -830,8 +885,9 @@ html, body {
 .toast.toast-success .toast-icon { color: var(--success); }
 .toast.toast-error { border-left: 3px solid var(--error); }
 .toast.toast-error .toast-icon { color: var(--error); }
-.toast.toast-warning { border-left: 3px solid var(--warning); }
 .toast.toast-warning .toast-icon { color: var(--warning); }
+.toast.toast-info { border-left: 3px solid var(--primary); }
+.toast.toast-info .toast-icon { color: var(--primary); }
 
 /* ─── Settings Overlay ─── */
 .settings-overlay {

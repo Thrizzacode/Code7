@@ -49,6 +49,10 @@ const Toast = {
     return this.show('warning', title, message, duration || 5000);
   },
 
+  info(title, message, duration) {
+    return this.show('info', title, message, duration || 4000);
+  },
+
   _remove(toast) {
     if (!toast || !toast.parentNode) return;
     toast.classList.add('removing');

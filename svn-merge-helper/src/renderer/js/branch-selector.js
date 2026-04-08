@@ -9,6 +9,8 @@ const BranchSelector = {
   _targetPath: null,
   _sourceWcPath: null,
   _targetWcPath: null,
+  _sourceVersions: [],
+  _targetVersions: [],
   _warningDismissed: false,
 
   // Allowed merge flow order
@@ -82,6 +84,11 @@ const BranchSelector = {
     Utils.$('target-path').textContent = '';
     Utils.$('source-path').classList.remove('active');
     Utils.$('target-path').classList.remove('active');
+    Utils.$('source-path').classList.remove('warning');
+    Utils.$('target-path').classList.remove('warning');
+
+    this._sourceVersions = [];
+    this._targetVersions = [];
 
     this._sourcePath = null;
     this._targetPath = null;
@@ -148,8 +155,26 @@ const BranchSelector = {
 
     versions.forEach(v => {
       const opt = document.createElement('option');
-      opt.value = v;
-      opt.textContent = v;
+      const versionStr = typeof v === 'string' ? v : v.version;
+      const isLocal = typeof v === 'string' || v.presentLocally;
+      const isRemote = typeof v === 'string' || v.presentRemotely;
+      
+      opt.value = versionStr;
+      
+      let label = versionStr;
+      if (isLocal && !isRemote) {
+        label += ' (僅本地)';
+      } else if (!isLocal && isRemote) {
+        label += ' (遠端)';
+      }
+      
+      opt.textContent = label;
+      
+      if (!isLocal) {
+        opt.classList.add('remote-version');
+      } else if (!isRemote) {
+        opt.classList.add('local-only-version');
+      }
       sel.appendChild(opt);
     });
 
@@ -186,16 +211,19 @@ const BranchSelector = {
       if (wcRoot && template && window.svnApi.getEnvVersions) {
         versions = await window.svnApi.getEnvVersions(wcRoot, templates, env);
       }
-      
-      // Fallback to static versions if dynamic fails
-      if (!versions || versions.length === 0) {
+    } catch (err) {
+      console.error('Failed to fetch versions:', err);
+      // Only fallback to static if absolutely necessary (e.g. IPC error), 
+      // but an empty array from getEnvVersions should be respected.
+      if (versions === null || versions === undefined) {
         versions = this._currentProject.versions || [];
       }
-    } catch {
-      versions = this._currentProject.versions || [];
     }
 
     this._populateVersions(versionSelectId, versions);
+    if (side === 'source') this._sourceVersions = versions;
+    else this._targetVersions = versions;
+
     this.onSelectionChange(side);
   },
 
@@ -232,9 +260,18 @@ const BranchSelector = {
     const repoUrl = `${this._currentProject.repoUrl}/${relativePath}`;
     const wcPath = `${this._currentProject.workingCopyRoot}/${relativePath}`;
 
-    pathEl.textContent = repoUrl;
-    pathEl.title = `Repo: ${repoUrl}\nWC: ${wcPath}`;
+    const versions = side === 'source' ? this._sourceVersions : this._targetVersions;
+    const versionData = versions.find(v => (typeof v === 'string' ? v : v.version) === version);
+    const isLocal = !versionData || (typeof versionData === 'string') || versionData.presentLocally;
+
+    pathEl.textContent = isLocal ? repoUrl : `⚠ ${repoUrl}`;
+    pathEl.title = (isLocal ? '' : '[尚未獲取本地代碼]\n') + `Repo: ${repoUrl}\nWC: ${wcPath}`;
     pathEl.classList.add('active');
+    if (!isLocal) {
+      pathEl.classList.add('warning');
+    } else {
+      pathEl.classList.remove('warning');
+    }
 
     if (side === 'source') {
       this._sourcePath = repoUrl;
@@ -244,9 +281,81 @@ const BranchSelector = {
       this._targetWcPath = wcPath;
     }
 
+    // Update Sync Button visibility
+    this._updateSyncButton(side, versionData);
+
     // Validate merge flow
     this._validateMergeFlow();
     this._checkAndLoadRevisions();
+  },
+
+  /**
+   * Update the visibility and state of the 'Sync to Local' button.
+   * @param {'source'|'target'} side 
+   * @param {object|string} versionData 
+   */
+  _updateSyncButton(side, versionData) {
+    const container = Utils.$(`${side}-sync-container`);
+    if (!container) return;
+    
+    container.innerHTML = '';
+
+    if (!versionData || typeof versionData === 'string' || versionData.presentLocally) {
+      return;
+    }
+
+    // Only show if it's presentRemotely but NOT presentLocally
+    if (versionData.presentRemotely && !versionData.presentLocally) {
+      const btn = document.createElement('button');
+      btn.className = 'btn-sync-local';
+      btn.innerHTML = '<span class="sync-icon">📥</span> 同步至本地 (Update Local)';
+      btn.title = '此版本僅存在於遠端，點擊以同步至本地目錄。';
+      btn.addEventListener('click', () => this.syncToLocal(side, versionData));
+      container.appendChild(btn);
+    }
+  },
+
+  /**
+   * Sync a remote-only version to the local working copy.
+   * @param {'source'|'target'} side 
+   * @param {object|string} versionData 
+   */
+  async syncToLocal(side, versionData) {
+    const container = Utils.$(`${side}-sync-container`);
+    const btn = container.querySelector('.btn-sync-local');
+    if (!btn || btn.classList.contains('loading')) return;
+
+    try {
+      btn.classList.add('loading');
+      btn.innerHTML = '<span class="sync-icon">⏳</span> 正在同步 (Syncing...)';
+
+      const templates = this._currentProject.pathTemplates || {};
+      const env = Utils.$(`${side}-env`).value;
+      const template = templates[env];
+      const versionStr = typeof versionData === 'string' ? versionData : versionData.version;
+      const relativePath = template.replace('{version}', versionStr);
+      const wcPath = `${this._currentProject.workingCopyRoot}/${relativePath}`;
+
+      Toast.info('正在同步', `正在同步 ${versionStr} 至本地 (這可能需要一點時間)...`);
+      
+      const result = await window.svnApi.ensureLocalPath(wcPath);
+      
+      if (result.success) {
+        Toast.success('同步成功', `${versionStr} 已下載至本地`);
+        // Refresh versions to update the local presence flag
+        await this.refreshVersions();
+      } else {
+        Toast.error('同步失敗', `${versionStr} 同步失敗: ${result.error?.message || '未知錯誤'}`);
+      }
+    } catch (err) {
+      console.error('Sync failed:', err);
+      Toast.error(`同步過程出錯: ${err.message}`);
+    } finally {
+      if (btn) {
+        btn.classList.remove('loading');
+        btn.innerHTML = '<span class="sync-icon">📥</span> 同步至本地 (Update Local)';
+      }
+    }
   },
 
   /**
@@ -329,5 +438,16 @@ const BranchSelector = {
     if (!this._sourcePath || !this._targetPath) return false;
     if (sourceEnv === targetEnv && sourceVersion === targetVersion) return false;
     return true;
+  },
+
+  /**
+   * Manually trigger a refresh of versions for both sides.
+   */
+  async refreshVersions() {
+    if (!this._currentProject) return;
+    await Promise.all([
+      this.onEnvChange('source'),
+      this.onEnvChange('target')
+    ]);
   }
 };

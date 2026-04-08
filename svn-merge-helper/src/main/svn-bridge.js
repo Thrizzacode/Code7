@@ -88,8 +88,30 @@ function parseStatusXml(xml) {
 
   return entries.map(entry => ({
     path: entry['@_path'] || '',
-    itemStatus: (entry['wc-status'] && entry['wc-status']['@_item']) || 'normal',
     propsStatus: (entry['wc-status'] && entry['wc-status']['@_props']) || 'none'
+  }));
+}
+
+/**
+ * Parse SVN XML list output.
+ */
+function parseListXml(xml) {
+  const parsed = xmlParser.parse(xml);
+  if (!parsed.lists || !parsed.lists.list || !parsed.lists.list.entry) return [];
+
+  const entries = Array.isArray(parsed.lists.list.entry)
+    ? parsed.lists.list.entry
+    : [parsed.lists.list.entry];
+
+  return entries.map(entry => ({
+    name: entry.name || '',
+    kind: entry['@_kind'] || 'unknown',
+    size: entry.size || 0,
+    commit: entry.commit ? {
+      revision: entry.commit['@_revision'],
+      author: entry.commit.author,
+      date: entry.commit.date
+    } : null
   }));
 }
 
@@ -294,6 +316,35 @@ const SvnBridge = {
     try {
       const stdout = await execSvn(['update', wcPath], { timeout: 120000 });
       return { success: true, output: stdout };
+    } catch (err) {
+      return { success: false, error: err };
+    }
+  },
+
+  /**
+   * Ensure a local path exists in the working copy (expand sparse checkout).
+   * @param {string} wcPath
+   * @returns {Promise<{success: boolean, output?: string, error?: object}>}
+   */
+  async ensureLocalPath(wcPath) {
+    try {
+      const stdout = await execSvn(['update', '--set-depth', 'infinity', wcPath], { timeout: 120000 });
+      return { success: true, output: stdout };
+    } catch (err) {
+      return { success: false, error: err };
+    }
+  },
+
+  /**
+   * List contents of a remote SVN repository URL.
+   * @param {string} svnUrl
+   * @returns {Promise<{success: boolean, entries?: object[], error?: object}>}
+   */
+  async list(svnUrl) {
+    try {
+      const stdout = await execSvn(['list', '--xml', svnUrl], { timeout: 15000 });
+      const entries = parseListXml(stdout);
+      return { success: true, entries };
     } catch (err) {
       return { success: false, error: err };
     }

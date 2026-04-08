@@ -11,6 +11,7 @@ contextBridge.exposeInMainWorld('svnApi', {
   resolve: (filePath) => ipcRenderer.invoke('svn:resolve', filePath),
   getMergeInfo: (sourceUrl, targetWcPath) => ipcRenderer.invoke('svn:mergeinfo', sourceUrl, targetWcPath),
   update: (wcPath) => ipcRenderer.invoke('svn:update', wcPath),
+  ensureLocalPath: (wcPath) => ipcRenderer.invoke('svn:ensure-local-path', wcPath),
   updateBatch: (paths) => ipcRenderer.invoke('svn:update-batch', paths),
   onUpdateProgress: (callback) => {
     ipcRenderer.removeAllListeners('svn:update-progress');
