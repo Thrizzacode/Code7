@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.4.0] - 2026-04-08
+
+### Added
+- **遠端版本列表 (Remote Listing)**：支援從伺服器抓取所有可用分支版本，不再侷限於已下載到本地的資料夾。
+- **智能同步 (Smart Sync)**：針對尚未下載到本地的環境版本，新增一鍵同步按鈕，自動執行 `svn update` 並展開目錄 (Infinity Depth)。
+- **路徑自動校準**：整合 `ensure-local-path` 機制，確保合併前目標路徑已在本地建立且準備就緒。
+
 ## [1.3.0] - 2026-04-08
 
 ### Added
