@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy"
+    content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:;">
+  <title>Code7</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles/main.css">
+  <style>
+    /* Dropdown Menu Styles */
+    .dropdown {
+      position: relative;
+      display: inline-block;
+    }
+    .dropdown-menu {
+      display: none;
+      position: absolute;
+      right: 0;
+      top: 100%;
+      background-color: #1e1e26;
+      min-width: 160px;
+      box-shadow: 0 8px 16px rgba(0,0,0,0.5);
+      z-index: 1000;
+      border-radius: 4px;
+      border: 1px solid #333;
+      padding: 4px 0;
+    }
+    .dropdown:hover .dropdown-menu {
+      display: block;
+    }
+    .dropdown-item {
+      width: 100%;
+      padding: 10px 16px;
+      text-align: left;
+      background: none;
+      border: none;
+      color: #ccc;
+      cursor: pointer;
+      font-size: 14px;
+      transition: background 0.2s;
+    }
+    .dropdown-item:hover {
+      background-color: #2d2d3a;
+      color: #fff;
+    }
+    .project-item-path {
+      font-size: 11px;
+      color: var(--text-muted);
+      word-break: break-all;
+    }
+    .project-item-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .project-batch-toggle {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 12px;
+      color: var(--text-muted);
+      cursor: pointer;
+      user-select: none;
+    }
+    .project-batch-toggle input {
+      cursor: pointer;
+    }
+    .project-batch-toggle:hover {
+      color: #fff;
+    }
+    
+    /* Toast Styles */
+    #toast-container {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      z-index: 9999;
+    }
+    .toast {
+      position: relative;
+      background-color: #2d2d3a;
+      color: #fff;
+      padding: 12px 20px;
+      border-radius: 4px;
+      margin-top: 10px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+      border-left: 4px solid #4a9eff;
+      animation: slideIn 0.3s ease-out;
+      min-width: 250px;
+    }
+    .toast.success { border-left-color: #4caf50; }
+    .toast.error { border-left-color: #f44336; }
+    .toast.progress { 
+      border-left-color: #2196f3; 
+      padding-bottom: 18px; /* Space for the bar */
+    }
+    
+    .toast-progress-container {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 4px;
+      background-color: rgba(255,255,255,0.1);
+      overflow: hidden;
+      border-radius: 0 0 4px 4px;
+    }
+    .toast-progress-bar {
+      height: 100%;
+      background-color: #4a9eff;
+      width: 0%;
+      transition: width 0.3s ease;
+    }
+    .toast-progress-bar.indeterminate {
+      width: 50%;
+      animation: indeterminate 1.5s infinite ease-in-out;
+    }
+    
+    @keyframes indeterminate {
+      0% { transform: translateX(-100%); }
+      100% { transform: translateX(200%); }
+    }
+    
+    @keyframes slideIn {
+      from { transform: translateX(100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+  </style>
+</head>
+
+<body>
+  <!-- ─── SVN Not Found Screen ─── -->
+  <div id="svn-error-screen" class="screen" style="display: none;">
+    <div class="error-container">
+      <div class="error-icon">⚠</div>
+      <h1>SVN CLI 未找到</h1>
+      <p>無法執行 <code>svn --version</code>。請確認已安裝 SVN CLI 並加入系統 PATH。</p>
+      <button id="btn-retry-svn" class="btn btn-primary">重新檢查</button>
+    </div>
+  </div>
+
+  <!-- ─── Setup Screen (First Launch) ─── -->
+  <div id="setup-screen" class="screen" style="display: none;">
+    <div class="setup-container">
+      <div class="setup-header">
+        <h1>歡迎使用 Code7</h1>
+        <p class="setup-subtitle">簡化您的 branches → qat → stg 合併流程</p>
+      </div>
+      <div class="setup-flow-diagram">
+        <div class="flow-step"><span class="flow-label">branches</span></div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step"><span class="flow-label">qat</span></div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step"><span class="flow-label">stg</span></div>
+      </div>
+      <p class="setup-description">請先匯入工作目錄，以開始使用。</p>
+      <button id="btn-add-first-project" class="btn btn-primary btn-lg">📂 匯入工作目錄</button>
+    </div>
+  </div>
+
+  <!-- ─── Main Screen ─── -->
+  <div id="main-screen" class="screen" style="display: none;">
+    <!-- Top Bar -->
+    <header class="top-bar">
+      <div class="top-bar-left">
+        <h1 id="app-logo" class="app-title">Code7</h1>
+      </div>
+      <div class="top-bar-center">
+        <label for="project-selector" class="sr-only">選擇專案</label>
+        <select id="project-selector" class="select select-project">
+          <option value="">選擇專案...</option>
+        </select>
+      </div>
+      <div class="top-bar-right">
+        <div class="dropdown">
+          <button id="btn-sync" class="btn btn-icon" title="同步更新">🔄</button>
+          <div class="dropdown-menu">
+            <button id="btn-update-current" class="dropdown-item">更新當前專案</button>
+            <button id="btn-update-all" class="dropdown-item">更新所有子專案</button>
+          </div>
+        </div>
+        <button id="btn-settings" class="btn btn-icon" title="設定">⚙</button>
+      </div>
+    </header>
+
+    <!-- Branch Selector Panel -->
+    <section class="branch-panel">
+      <!-- Source -->
+      <div class="branch-side" id="source-panel">
+        <h2 class="branch-side-title">來源 (Source)</h2>
+        <div class="branch-selectors">
+          <label for="source-env">環境</label>
+          <select id="source-env" class="select" disabled>
+            <option value="">選擇環境...</option>
+            <option value="branches">branches</option>
+            <option value="qat">qat</option>
+            <option value="stg">stg</option>
+          </select>
+          <label for="source-version">版本</label>
+          <select id="source-version" class="select" disabled>
+            <option value="">選擇版本...</option>
+          </select>
+        </div>
+        <div id="source-path" class="resolved-path" title=""></div>
+      </div>
+
+      <!-- Direction Arrow -->
+      <div class="merge-direction">
+        <div class="merge-arrow">→</div>
+      </div>
+
+      <!-- Target -->
+      <div class="branch-side" id="target-panel">
+        <h2 class="branch-side-title">目標 (Target)</h2>
+        <div class="branch-selectors">
+          <label for="target-env">環境</label>
+          <select id="target-env" class="select" disabled>
+            <option value="">選擇環境...</option>
+            <option value="branches">branches</option>
+            <option value="qat">qat</option>
+            <option value="stg">stg</option>
+          </select>
+          <label for="target-version">版本</label>
+          <select id="target-version" class="select" disabled>
+            <option value="">選擇版本...</option>
+          </select>
+        </div>
+        <div id="target-path" class="resolved-path" title=""></div>
+      </div>
+    </section>
+
+    <!-- Merge Flow Warning -->
+    <div id="merge-flow-warning" class="warning-bar" style="display: none;">
+      <span class="warning-icon">⚠</span>
+      <span id="merge-flow-warning-text"></span>
+      <button id="btn-dismiss-warning" class="btn btn-sm btn-ghost">確認繼續</button>
+    </div>
+
+    <!-- Revision Picker -->
+    <section class="revision-section">
+      <div class="revision-toolbar">
+        <h2 class="revision-title">Revisions</h2>
+        <div class="revision-filter" style="position: relative; display: flex; align-items: center;">
+          <input type="text" id="revision-filter-input" class="input" placeholder="搜尋 revision、作者、訊息..." style="padding-right: 35px;" />
+          <div class="help-tooltip-container" style="position: absolute; right: 10px; margin-left: 0;">
+            <span class="help-icon">ℹ️</span>
+            <div class="help-tooltip">
+              <div class="help-tooltip-title">💡 進階過濾：支援 RegExp 的正規表達式</div>
+              <ul>
+                <li><code>A|B</code> 搜尋包含 A 或 B 的文字，例如：<code>[bug|fix]</code></li>
+                <li><code>^123</code> 狹窄搜尋：以 123 <strong>開頭</strong> 的號碼</li>
+                <li><code>\.js$</code> 狹窄搜尋：以 .js <strong>結尾</strong> 的字眼</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+        <div class="revision-actions">
+          <label class="checkbox-label">
+            <input type="checkbox" id="select-all-revisions" />
+            <span>全選</span>
+          </label>
+          <span id="selection-summary" class="selection-summary">尚未選取</span>
+        </div>
+      </div>
+
+      <!-- Revision Table -->
+      <div class="revision-table-wrapper">
+        <table class="revision-table" id="revision-table">
+          <thead>
+            <tr>
+              <th class="col-check"></th>
+              <th class="col-rev">Revision</th>
+              <th class="col-author">Author</th>
+              <th class="col-date">Date</th>
+              <th class="col-message">Message</th>
+            </tr>
+          </thead>
+          <tbody id="revision-tbody">
+            <!-- Populated by JS -->
+          </tbody>
+        </table>
+        <div id="revision-empty" class="empty-state" style="display: none;">
+          <p>請先選擇來源與目標分支</p>
+        </div>
+        <div id="revision-loading" class="loading-state" style="display: none;">
+          <div class="spinner"></div>
+          <p>載入中...</p>
+        </div>
+      </div>
+
+      <div class="revision-footer">
+        <button id="btn-load-more" class="btn btn-ghost" style="display: none;">載入更多</button>
+      </div>
+    </section>
+
+    <!-- Merge Action Bar -->
+    <footer class="action-bar">
+      <div class="action-bar-info">
+        <span id="merge-summary"></span>
+      </div>
+      <button id="btn-merge" class="btn btn-primary btn-lg" disabled>
+        執行合併 (Merge)
+      </button>
+    </footer>
+  </div>
+
+  <!-- ─── Modal Overlay ─── -->
+  <div id="modal-overlay" class="modal-overlay" style="display: none;">
+    <div id="modal-container" class="modal-container">
+      <div class="modal-header">
+        <h2 id="modal-title"></h2>
+        <button id="modal-close" class="btn btn-icon btn-ghost">✕</button>
+      </div>
+      <div id="modal-body" class="modal-body"></div>
+      <div id="modal-footer" class="modal-footer"></div>
+    </div>
+  </div>
+
+  <!-- ─── Toast Container ─── -->
+  <div id="toast-container" class="toast-container"></div>
+
+  <!-- ─── Settings Panel (Overlay) ─── -->
+  <div id="settings-overlay" class="settings-overlay" style="display: none;">
+    <div class="settings-panel">
+      <div class="settings-header">
+        <h2>設定</h2>
+        <button id="btn-close-settings" class="btn btn-icon btn-ghost">✕</button>
+      </div>
+      <div class="settings-body">
+        <!-- Projects List -->
+        <div class="settings-section">
+          <h3>專案管理</h3>
+          <div id="settings-projects-list" class="projects-list"></div>
+          <button id="btn-import-workspace" class="btn btn-primary">📂 匯入工作目錄</button>
+        </div>
+
+        <!-- Merge Tool -->
+        <div class="settings-section">
+          <h3>外部合併工具</h3>
+          <div class="form-group">
+            <label for="merge-tool-path">TortoiseMerge 路徑</label>
+            <input type="text" id="merge-tool-path" class="input" placeholder="自動偵測或手動輸入..." />
+            <button id="btn-detect-merge-tool" class="btn btn-sm btn-secondary">自動偵測</button>
+          </div>
+          <button id="btn-save-merge-tool" class="btn btn-primary">儲存工具設定</button>
+        </div>
+
+        <!-- App Update (Requirement: Manual Update Check) -->
+        <div class="settings-section">
+          <h3>App 更新</h3>
+          <div class="update-card">
+            <div class="update-info">
+              <span class="app-version-label">Code7 <span id="current-app-version" class="badge badge-secondary">v1.1.0</span></span>
+              <div id="update-status-text" class="update-status-text">已是最新版本</div>
+            </div>
+            <div id="update-progress-container" class="update-progress-container" style="display: none;">
+              <div class="progress-bar-wrapper">
+                <div id="update-progress-bar" class="progress-bar-fill" style="width: 0%"></div>
+              </div>
+              <div id="update-progress-info" class="update-progress-info">0% (0 KB/s)</div>
+            </div>
+            <div class="update-actions">
+              <button id="btn-check-updates" class="btn btn-sm btn-secondary">
+                <span class="icon">↻</span> 檢查更新
+              </button>
+              <button id="btn-restart-install" class="btn btn-sm btn-primary" style="display: none;">
+                立即重啟並安裝
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── Import Loading Overlay ─── -->
+  <div id="import-loading-overlay" class="modal-overlay" style="display: none;">
+    <div class="modal-container" style="max-width: 360px; text-align: center; padding: 32px 24px;">
+      <div class="spinner" style="margin: 0 auto 16px;"></div>
+      <p style="color: var(--text-primary); font-weight: 600; margin-bottom: 8px;">正在掃描工作目錄...</p>
+      <p id="import-loading-status" style="color: var(--text-muted); font-size: 13px;"></p>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="js/utils.js"></script>
+  <script src="js/toast.js"></script>
+  <script src="js/modal.js"></script>
+  <script src="js/settings.js"></script>
+  <script src="js/branch-selector.js"></script>
+  <script src="js/revision-picker.js"></script>
+  <script src="js/merge-executor.js"></script>
+  <script src="js/app.js"></script>
+  <!-- Progress Toast Container -->
+  <div id="toast-container"></div>
+</body>
+
+</html>
