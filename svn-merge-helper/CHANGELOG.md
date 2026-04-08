@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.0] - 2026-04-08
+
+### Added
+- **自動更新功能 (Auto Update)**：整合 `electron-updater`，支援背景自動檢查、手動點擊更新及下載進度顯示。
+- **更新 UI 管理**：在「設定」頁面新增專屬更新區塊，方便使用者查看當前版本並手動觸發更新檢查。
+- **自動化發佈流程 (CI/CD)**：建置 GitHub Actions 工作流，實現基於 Git Tag 的自動編譯與 GitHub Release 上傳。
+- **IPC 更新通訊機制**：建立主進程與渲染進程間的即時狀態同步，確保下載百分比與更新狀態能即時反饋。
+
+### Changed
+- **開發與編譯環境升級**：將編譯環境提升至 Node.js 22 (LTS)，並鎖定 GitHub Actions 使用 Node.js 24 執行 JS Actions 以規避棄用警告。
+- **發佈配置優化**：在 `package.json` 中完整配置 GitHub 發布提供者 (Provider) 資訊。
+
 ## [1.1.0] - 2026-04-08
 
 ### Added

@@ -41,3 +41,12 @@ The system SHALL allow the user to restart and install the update once it has be
 #### Scenario: User clicks restart
 - **WHEN** the user clicks the "Restart and Install" button
 - **THEN** the system SHALL quit the application and install the downloaded update
+
+### Requirement: CI/CD Release Pipeline
+The system SHALL support automated release creation via GitHub Actions.
+
+#### Scenario: Tag push triggers release
+- **WHEN** a new git tag matching `v*` is pushed to GitHub
+- **THEN** the system SHALL build the Windows installer in a standard CI environment
+- **THEN** the system SHALL create a GitHub Release and upload the resulting artifacts (`.exe`, `latest.yml`, etc.)
+- **THEN** the CI environment SHALL use Node.js 24/22 to maintain compatibility with the latest runner standards.
