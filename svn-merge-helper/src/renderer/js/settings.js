@@ -9,6 +9,11 @@ const Settings = {
 
   async init() {
     this._config = await window.svnApi.loadConfig();
+    
+    // Fetch and display current version
+    const version = await window.svnApi.getVersion();
+    const versionBadge = Utils.$('current-app-version');
+    if (versionBadge) versionBadge.textContent = `v${version}`;
 
     // Settings open/close
     Utils.$('btn-settings').addEventListener('click', () => this.open());

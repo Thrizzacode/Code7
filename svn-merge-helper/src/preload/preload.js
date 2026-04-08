@@ -41,5 +41,6 @@ contextBridge.exposeInMainWorld('svnApi', {
   onAppUpdateProgress: (callback) => {
     ipcRenderer.removeAllListeners('update:progress');
     ipcRenderer.on('update:progress', (_event, data) => callback(data));
-  }
+  },
+  getVersion: () => ipcRenderer.invoke('update:get-version')
 });

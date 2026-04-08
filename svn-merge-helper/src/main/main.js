@@ -166,6 +166,10 @@ function registerIpcHandlers() {
   ipcMain.handle("update:quit-and-install", () => {
     autoUpdater.quitAndInstall();
   });
+
+  ipcMain.handle("update:get-version", () => {
+    return app.getVersion();
+  });
 }
 
 /**
