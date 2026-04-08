@@ -8,16 +8,24 @@ on:
 jobs:
   release:
     runs-on: windows-latest
+    # 指定所有步驟的執行目錄為 svn-merge-helper
+    defaults:
+      run:
+        working-directory: svn-merge-helper
 
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
+        with:
+          # 需要檢出整個 repo，不僅僅是子路徑
+          path: '.'
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-node: 20
+          node-version: 20
           cache: 'npm'
+          cache-dependency-path: svn-merge-helper/package-lock.json
 
       - name: Install Dependencies
         run: npm install
