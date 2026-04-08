@@ -72,6 +72,7 @@ const Settings = {
         case 'not-available':
           statusText.textContent = '已是最新版本';
           checkBtn.disabled = false;
+          Toast.success('檢查完成', '您的 App 已是最新版本');
           break;
 
         case 'ready':
