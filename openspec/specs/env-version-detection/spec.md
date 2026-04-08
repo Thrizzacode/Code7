@@ -7,12 +7,25 @@ TBD - created by archiving change 'smart-branch-selector'. Update Purpose after 
 ## Requirements
 
 ### Requirement: Dynamic Environment Version Loading
-The system SHALL dynamically scan the filesystem for available versions based on the selected environment and its corresponding path template.
+The system SHALL dynamically scan for available versions based on the selected environment using a hybrid approach.
 
-#### Scenario: User selects "qat" environment
-- **WHEN** the user selects the "qat" environment
-- **THEN** the system SHALL extract the directory prefix from the path template
-- **THEN** the system SHALL list all subdirectories matching the prefix and strip the prefix to populate the version dropdown
+#### Scenario: Hybrid version detection
+- **WHEN** the user selects an environment (e.g., qat)
+- **THEN** the system SHALL first attempt to list directories via remote SVN URL
+- **THEN** THE system SHALL fallback to local directory scanning if the remote query fails or times out
+- **THEN** the system SHALL merge and deduplicate results from both remote and local sources
+
+
+<!-- @trace
+source: remote-version-listing
+updated: 2026-04-08
+code:
+  - svn-merge-helper/src/renderer/js/branch-selector.js
+  - svn-merge-helper/src/renderer/styles/main.css
+  - svn-merge-helper/src/main/config-manager.js
+  - svn-merge-helper/src/main/svn-bridge.js
+  - svn-merge-helper/CHANGELOG.md
+-->
 
 ---
 ### Requirement: Independent Version Lists

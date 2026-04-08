@@ -83,3 +83,24 @@ All SVN command failures SHALL be captured and presented to the user with action
 - **WHEN** an SVN command fails with an unrecognized error
 - **THEN** the system SHALL display the raw stderr output from the SVN command
 - **THEN** the system SHALL provide a "Copy Error" button to copy the full error to clipboard
+
+---
+### Requirement: Execute svn list
+The system SHALL provide a method `SvnBridge.list(svnUrl)` to retrieve the subdirectory listing of a remote repository path.
+
+#### Scenario: Execute svn list on directory
+- **WHEN** the system calls `SvnBridge.list(svnUrl)`
+- **THEN** the system SHALL execute `svn list --xml <svnUrl>`
+- **THEN** the system SHALL parse the XML output into an array of subdirectory names
+- **THEN** THE system SHALL filter entries to include only those where `kind="dir"`
+
+<!-- @trace
+source: remote-version-listing
+updated: 2026-04-08
+code:
+  - svn-merge-helper/src/renderer/js/branch-selector.js
+  - svn-merge-helper/src/renderer/styles/main.css
+  - svn-merge-helper/src/main/config-manager.js
+  - svn-merge-helper/src/main/svn-bridge.js
+  - svn-merge-helper/CHANGELOG.md
+-->
