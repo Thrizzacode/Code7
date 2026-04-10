@@ -36,7 +36,9 @@ function createDefaultConfig() {
   return {
     projects: [],
     mergeToolPath: '',
-    defaultPathTemplates: { ...DEFAULT_PATH_TEMPLATES }
+    defaultPathTemplates: { ...DEFAULT_PATH_TEMPLATES },
+    theme: 'physicam',
+    mode: 'dark'
   };
 }
 
@@ -83,7 +85,9 @@ const ConfigManager = {
       return {
         projects: config.projects || [],
         mergeToolPath: config.mergeToolPath || '',
-        defaultPathTemplates: config.defaultPathTemplates || { ...DEFAULT_PATH_TEMPLATES }
+        defaultPathTemplates: config.defaultPathTemplates || { ...DEFAULT_PATH_TEMPLATES },
+        theme: config.theme || 'physicam',
+        mode: config.mode || 'dark'
       };
     } catch {
       return createDefaultConfig();
@@ -346,7 +350,7 @@ const ConfigManager = {
 
     const candidates = entries.filter(e => {
       if (!e.isDirectory()) return false;
-      if (!e.name.startsWith('Fz_')) return false;
+      if (!e.name.startsWith('Fz')) return false;
       const svnDir = path.join(parentDir, e.name, '.svn');
       return fs.existsSync(svnDir);
     });

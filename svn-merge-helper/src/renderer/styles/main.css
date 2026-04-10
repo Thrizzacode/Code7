@@ -60,7 +60,93 @@
   /* Typography */
   --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --font-mono: 'JetBrains Mono', 'Consolas', monospace;
+
+  /* Theme swatch color (used by .theme-swatch) */
+  --theme-swatch: #6e6eff;
 }
+
+/* ─── Themes ─── */
+
+/* PHYSICAM — 紅色 (Default) */
+[data-theme="physicam"] {
+  --bg-primary:    #130f0f;
+  --bg-secondary:  #1d1616;
+  --bg-tertiary:   #231c1c;
+  --bg-elevated:   #2a2222;
+  --bg-hover:      #322828;
+  --bg-active:     #3a2f2f;
+  --accent:        #f87171;
+  --accent-hover:  #ef4444;
+  --accent-soft:   rgba(248, 113, 113, 0.15);
+  --border:        #302424;
+  --border-focus:  #f87171;
+  --theme-swatch:  #f87171;
+}
+
+/* TECHNOLOM — 藍色 */
+[data-theme="technolom"] {
+  --bg-primary:    #0f1013;
+  --bg-secondary:  #161921;
+  --bg-tertiary:   #1c2128;
+  --bg-elevated:   #222930;
+  --bg-hover:      #28313a;
+  --bg-active:     #303b46;
+  --accent:        #60a5fa;
+  --accent-hover:  #3b82f6;
+  --accent-soft:   rgba(96, 165, 250, 0.15);
+  --border:        #242b36;
+  --border-focus:  #60a5fa;
+  --theme-swatch:  #60a5fa;
+}
+
+/* ESPRIM — 綠色 */
+[data-theme="esprim"] {
+  --bg-primary:    #0f1310;
+  --bg-secondary:  #151d16;
+  --bg-tertiary:   #1b241c;
+  --bg-elevated:   #212b22;
+  --bg-hover:      #28342a;
+  --bg-active:     #2f3d31;
+  --accent:        #4ade80;
+  --accent-hover:  #22c55e;
+  --accent-soft:   rgba(74, 222, 128, 0.15);
+  --border:        #222a23;
+  --border-focus:  #4ade80;
+  --theme-swatch:  #4ade80;
+}
+
+/* PARADIGM — 紫色 */
+[data-theme="paradigm"] {
+  --bg-primary:    #120f13;
+  --bg-secondary:  #1a161d;
+  --bg-tertiary:   #211c26;
+  --bg-elevated:   #28222f;
+  --bg-hover:      #302838;
+  --bg-active:     #392f44;
+  --accent:        #c084fc;
+  --accent-hover:  #a855f7;
+  --accent-soft:   rgba(192, 132, 252, 0.15);
+  --border:        #2c243a;
+  --border-focus:  #c084fc;
+  --theme-swatch:  #c084fc;
+}
+
+/* INAZUMA — 金黃色 */
+[data-theme="inazuma"] {
+  --bg-primary:    #131110;
+  --bg-secondary:  #1d1a15;
+  --bg-tertiary:   #23201b;
+  --bg-elevated:   #2a2621;
+  --bg-hover:      #322e28;
+  --bg-active:     #3b352d;
+  --accent:        #fbbf24;
+  --accent-hover:  #f59e0b;
+  --accent-soft:   rgba(251, 191, 36, 0.15);
+  --border:        #2e2a24;
+  --border-focus:  #fbbf24;
+  --theme-swatch:  #fbbf24;
+}
+
 
 /* ─── Reset ─── */
 *, *::before, *::after {
@@ -1267,3 +1353,204 @@ html, body {
   transform: rotate(180deg);
 }
 
+/* ─── Theme Switcher ─── */
+.theme-switcher {
+  position: relative;
+}
+
+.theme-switcher-btn {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-xs) var(--space-sm);
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  font-family: var(--font-family);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  white-space: nowrap;
+  user-select: none;
+}
+
+.theme-switcher-btn:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+  border-color: var(--text-muted);
+}
+
+.theme-switcher-btn .theme-swatch {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  background: var(--theme-swatch);
+  flex-shrink: 0;
+  transition: background var(--transition-fast);
+}
+
+.theme-dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  padding: var(--space-xs);
+  min-width: 160px;
+  z-index: 200;
+  animation: fadeIn var(--transition-fast);
+}
+
+.theme-option {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background var(--transition-fast);
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.theme-option:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.theme-option.active {
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.theme-option .theme-swatch {
+  width: 14px;
+  height: 14px;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+.theme-option .theme-check {
+  margin-left: auto;
+  color: var(--accent);
+  font-size: 14px;
+  opacity: 0;
+}
+
+.theme-option.active .theme-check {
+  opacity: 1;
+}
+
+.theme-option[data-theme-value="physicam"] .theme-swatch { background: #f87171; }
+.theme-option[data-theme-value="technolom"] .theme-swatch { background: #60a5fa; }
+.theme-option[data-theme-value="esprim"]   .theme-swatch { background: #4ade80; }
+.theme-option[data-theme-value="paradigm"] .theme-swatch { background: #c084fc; }
+.theme-option[data-theme-value="inazuma"]  .theme-swatch { background: #fbbf24; }
+
+/* ─── Mode Toggle Button ─── */
+.mode-toggle-btn {
+  font-size: 16px;
+}
+
+.mode-toggle-btn:hover {
+  background: var(--bg-hover);
+}
+
+/* ─── Light Mode ─── */
+[data-mode="light"] {
+  --bg-primary:    #f0f0f5;
+  --bg-secondary:  #e6e6ef;
+  --bg-tertiary:   #dcdce8;
+  --bg-elevated:   #ffffff;
+  --bg-hover:      #d4d4e2;
+  --bg-active:     #c8c8da;
+
+  --text-primary:  #1a1a2e;
+  --text-secondary:#4a4a6a;
+  --text-muted:    #8888a8;
+  --text-inverse:  #f0f0f5;
+
+  --border:        #ccccdc;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.12);
+  --shadow-lg: 0 8px 24px rgba(0,0,0,0.16);
+}
+
+/* Light mode + each theme — keep the accent but adjust backgrounds with theme tint */
+[data-mode="light"][data-theme="physicam"] {
+  --bg-primary:    #f5f0f0;
+  --bg-secondary:  #ede8e8;
+  --bg-tertiary:   #e4dcdc;
+  --bg-elevated:   #ffffff;
+  --bg-hover:      #d9d0d0;
+  --bg-active:     #cec4c4;
+  --border:        #ddd0d0;
+}
+
+[data-mode="light"][data-theme="technolom"] {
+  --bg-primary:    #f0f2f5;
+  --bg-secondary:  #e6eaf0;
+  --bg-tertiary:   #dce2eb;
+  --bg-elevated:   #ffffff;
+  --bg-hover:      #d4dbe6;
+  --bg-active:     #c8d3e0;
+  --border:        #ccd4e0;
+}
+
+[data-mode="light"][data-theme="esprim"] {
+  --bg-primary:    #f0f5f1;
+  --bg-secondary:  #e6ede8;
+  --bg-tertiary:   #dce5de;
+  --bg-elevated:   #ffffff;
+  --bg-hover:      #d4dfd6;
+  --bg-active:     #c8d8cb;
+  --border:        #ccdacd;
+}
+
+[data-mode="light"][data-theme="paradigm"] {
+  --bg-primary:    #f3f0f5;
+  --bg-secondary:  #ebe7ef;
+  --bg-tertiary:   #e2dce8;
+  --bg-elevated:   #ffffff;
+  --bg-hover:      #d9d4e2;
+  --bg-active:     #cec8db;
+  --border:        #d8d0e2;
+}
+
+[data-mode="light"][data-theme="inazuma"] {
+  --bg-primary:    #f5f3f0;
+  --bg-secondary:  #edeae4;
+  --bg-tertiary:   #e5e1d8;
+  --bg-elevated:   #ffffff;
+  --bg-hover:      #ddd9d0;
+  --bg-active:     #d4cfc4;
+  --border:        #ddd8cc;
+}
+
+/* Light mode — keep select/option readable */
+[data-mode="light"] .select,
+[data-mode="light"] .input {
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+}
+
+[data-mode="light"] .select option {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+}
+
+[data-mode="light"] .revision-table-wrapper {
+  background: var(--bg-elevated);
+}
+
+[data-mode="light"] .revision-table thead {
+  background: var(--bg-secondary);
+}
+
+[data-mode="light"] .revision-table td {
+  border-bottom-color: var(--border);
+}

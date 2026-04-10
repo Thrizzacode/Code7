@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.5.0] - 2026-04-10
+
+### Added
+- **個人化佈景主題 (Theme Switcher)**：導覽列新增主題切換選單，提供 PHYSICAM、TECHNOLOM 等 5 種風格色彩。
+- **深色/淺色模式**：新增一鍵切換明暗模式按鈕，支援系統自動記憶與 localStorage 即時還原功能，避免開啟時的閃爍白屏。
+- **持久化設定管理**：主題偏好正式納入 `config.json` 設定管理，並同步優化 `ConfigManager` 的儲存效率。
+
 ## [1.4.0] - 2026-04-08
 
 ### Added

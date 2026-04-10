@@ -177,6 +177,43 @@
         </select>
       </div>
       <div class="top-bar-right">
+        <!-- Theme Switcher -->
+        <div class="theme-switcher" id="theme-switcher">
+          <button id="theme-switcher-btn" class="theme-switcher-btn" title="切換主題" aria-haspopup="true" aria-expanded="false">
+            <span class="theme-swatch"></span>
+            <span id="theme-current-name">PHYSICAM</span>
+            <span>▾</span>
+          </button>
+          <div class="theme-dropdown" id="theme-dropdown" style="display:none;" role="menu">
+            <div class="theme-option active" data-theme-value="physicam" role="menuitem">
+              <span class="theme-swatch"></span>
+              <span>PHYSICAM</span>
+              <span class="theme-check">✓</span>
+            </div>
+            <div class="theme-option" data-theme-value="technolom" role="menuitem">
+              <span class="theme-swatch"></span>
+              <span>TECHNOLOM</span>
+              <span class="theme-check">✓</span>
+            </div>
+            <div class="theme-option" data-theme-value="esprim" role="menuitem">
+              <span class="theme-swatch"></span>
+              <span>ESPRIM</span>
+              <span class="theme-check">✓</span>
+            </div>
+            <div class="theme-option" data-theme-value="paradigm" role="menuitem">
+              <span class="theme-swatch"></span>
+              <span>PARADIGM</span>
+              <span class="theme-check">✓</span>
+            </div>
+            <div class="theme-option" data-theme-value="inazuma" role="menuitem">
+              <span class="theme-swatch"></span>
+              <span>INAZUMA</span>
+              <span class="theme-check">✓</span>
+            </div>
+          </div>
+        </div>
+        <!-- Dark / Light Mode Toggle -->
+        <button id="btn-mode-toggle" class="btn btn-icon mode-toggle-btn" title="切換深色/淺色模式" aria-label="切換模式">🌙</button>
         <div class="dropdown">
           <button id="btn-sync" class="btn btn-icon" title="同步更新">🔄</button>
           <div class="dropdown-menu">

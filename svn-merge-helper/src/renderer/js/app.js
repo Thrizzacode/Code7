@@ -4,6 +4,9 @@
  */
 const App = {
   async init() {
+    // ─── Step 0: Restore mode immediately from cache (before async IPC) ───
+    ModeController.restoreEarly();
+
     // ─── Step 1: Check SVN availability ───
     const svnCheck = await window.svnApi.checkAvailability();
 
@@ -32,12 +35,19 @@ const App = {
     // ─── Step 4: Initialize Sync functionality ───
     SyncController.init();
 
-    // ─── Step 5: Determine initial screen ───
+    // ─── Step 5: Initialize Theme & Mode ───
+    ThemeController.init();
+    ModeController.init();
+
+    // ─── Step 6: Determine initial screen ───
     const config = Settings.getConfig();
 
     if (!config.projects || config.projects.length === 0) {
       // First launch — show setup
       Utils.showScreen('setup-screen');
+      // Apply theme & mode even on setup screen
+      ThemeController.applyTheme(config.theme || 'physicam');
+      ModeController.applyMode(config.mode || 'dark');
     } else {
       // Normal launch — show main screen
       this._showMainScreen(config);
@@ -50,6 +60,9 @@ const App = {
   _showMainScreen(config) {
     Utils.showScreen('main-screen');
     BranchSelector.populateProjects(config);
+    // Apply saved theme and mode
+    ThemeController.applyTheme(config.theme || 'physicam');
+    ModeController.applyMode(config.mode || 'dark');
   },
 
   /**
@@ -62,6 +75,151 @@ const App = {
       Utils.showScreen('setup-screen');
     } else {
       this._showMainScreen(config);
+    }
+  }
+};
+
+/**
+ * ThemeController — manages theme switching, persistence, and UI.
+ */
+const ThemeController = {
+  THEMES: [
+    { value: 'physicam',  label: 'PHYSICAM'  },
+    { value: 'technolom', label: 'TECHNOLOM' },
+    { value: 'esprim',    label: 'ESPRIM'    },
+    { value: 'paradigm',  label: 'PARADIGM'  },
+    { value: 'inazuma',   label: 'INAZUMA'   }
+  ],
+
+  init() {
+    const btn = Utils.$('theme-switcher-btn');
+    const dropdown = Utils.$('theme-dropdown');
+
+    if (!btn || !dropdown) return;
+
+    // Toggle dropdown open/close
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const isOpen = dropdown.style.display !== 'none';
+      dropdown.style.display = isOpen ? 'none' : 'block';
+      btn.setAttribute('aria-expanded', String(!isOpen));
+    });
+
+    // Close when clicking outside
+    document.addEventListener('click', () => {
+      dropdown.style.display = 'none';
+      btn.setAttribute('aria-expanded', 'false');
+    });
+
+    // Option click handler
+    dropdown.querySelectorAll('.theme-option').forEach(opt => {
+      opt.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const themeValue = opt.dataset.themeValue;
+        this.selectTheme(themeValue);
+        dropdown.style.display = 'none';
+        btn.setAttribute('aria-expanded', 'false');
+      });
+    });
+  },
+
+  /**
+   * Apply a theme by name to the document root.
+   * @param {string} themeValue
+   */
+  applyTheme(themeValue) {
+    document.documentElement.setAttribute('data-theme', themeValue);
+    // Update button label
+    const nameEl = Utils.$('theme-current-name');
+    if (nameEl) {
+      const found = this.THEMES.find(t => t.value === themeValue);
+      nameEl.textContent = found ? found.label : themeValue.toUpperCase();
+    }
+    // Update active state in dropdown
+    const dropdown = Utils.$('theme-dropdown');
+    if (dropdown) {
+      dropdown.querySelectorAll('.theme-option').forEach(opt => {
+        opt.classList.toggle('active', opt.dataset.themeValue === themeValue);
+      });
+    }
+  },
+
+  /**
+   * Select theme, apply immediately, and persist to config.
+   * @param {string} themeValue
+   */
+  async selectTheme(themeValue) {
+    this.applyTheme(themeValue);
+    // Save to config
+    const config = Settings.getConfig();
+    config.theme = themeValue;
+    try {
+      await window.svnApi.saveConfig(config);
+    } catch (err) {
+      console.error('Failed to save theme:', err);
+    }
+  }
+};
+
+/**
+ * ModeController — manages dark/light mode toggle and persistence.
+ * Uses localStorage as an immediate cache so mode is restored before
+ * the async IPC config load completes.
+ */
+const ModeController = {
+  _current: 'dark',
+  _LS_KEY: 'code7-mode',
+
+  /**
+   * Called early (before config is loaded) to snapshot from localStorage.
+   * This prevents the flash of wrong theme on reload.
+   */
+  restoreEarly() {
+    const saved = localStorage.getItem(this._LS_KEY) || 'dark';
+    this._current = saved;
+    if (saved === 'light') {
+      document.documentElement.setAttribute('data-mode', 'light');
+    }
+  },
+
+  init() {
+    const btn = Utils.$('btn-mode-toggle');
+    if (!btn) return;
+    btn.addEventListener('click', () => this.toggle());
+  },
+
+  /**
+   * Apply mode ('dark' or 'light') to the document root.
+   * @param {string} mode
+   */
+  applyMode(mode) {
+    this._current = mode;
+    localStorage.setItem(this._LS_KEY, mode);
+    const btn = Utils.$('btn-mode-toggle');
+
+    if (mode === 'light') {
+      document.documentElement.setAttribute('data-mode', 'light');
+      if (btn) btn.textContent = '☀️';
+      if (btn) btn.title = '切換為深色模式';
+    } else {
+      document.documentElement.removeAttribute('data-mode');
+      if (btn) btn.textContent = '🌙';
+      if (btn) btn.title = '切換為淺色模式';
+    }
+  },
+
+  /**
+   * Toggle between dark and light mode and persist.
+   */
+  async toggle() {
+    const next = this._current === 'dark' ? 'light' : 'dark';
+    this.applyMode(next);
+    const config = Settings.getConfig();
+    config.mode = next;
+    try {
+      await window.svnApi.saveConfig(config);
+    } catch (err) {
+      console.error('Failed to save mode:', err);
     }
   }
 };
