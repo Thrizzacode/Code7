@@ -83,74 +83,6 @@
       color: #fff;
     }
 
-    /* Toast Styles */
-    #toast-container {
-      position: fixed;
-      bottom: 20px;
-      right: 20px;
-      z-index: 9999;
-    }
-
-    .toast {
-      position: relative;
-      background-color: #2d2d3a;
-      color: #fff;
-      padding: 12px 20px;
-      border-radius: 4px;
-      margin-top: 10px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
-      border-left: 4px solid #4a9eff;
-      animation: slideIn 0.3s ease-out;
-      min-width: 250px;
-    }
-
-    .toast.success {
-      border-left-color: #4caf50;
-    }
-
-    .toast.error {
-      border-left-color: #f44336;
-    }
-
-    .toast.progress {
-      border-left-color: #2196f3;
-      padding-bottom: 18px;
-      /* Space for the bar */
-    }
-
-    .toast-progress-container {
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      width: 100%;
-      height: 4px;
-      background-color: rgba(255, 255, 255, 0.1);
-      overflow: hidden;
-      border-radius: 0 0 4px 4px;
-    }
-
-    .toast-progress-bar {
-      height: 100%;
-      background-color: #4a9eff;
-      width: 0%;
-      transition: width 0.3s ease;
-    }
-
-    .toast-progress-bar.indeterminate {
-      width: 50%;
-      animation: indeterminate 1.5s infinite ease-in-out;
-    }
-
-    @keyframes indeterminate {
-      0% {
-        transform: translateX(-100%);
-      }
-
-      100% {
-        transform: translateX(200%);
-      }
-    }
-
     @keyframes slideIn {
       from {
         transform: translateX(100%);
@@ -532,6 +464,7 @@
             <div style="display: flex; gap: 8px; align-items: center;">
               <input type="text" id="iis-setting-files-path" class="input" placeholder="選擇 SettingFiles 資料夾路徑..." readonly style="flex: 1;" />
               <button id="btn-pick-setting-files" class="btn btn-sm btn-secondary">📂 瀏覽</button>
+              <button id="btn-reset-iis-setting-files" class="btn btn-sm btn-secondary" title="恢復團隊預設網路路徑">🔄 恢復預設</button>
             </div>
           </div>
           <div class="form-group">

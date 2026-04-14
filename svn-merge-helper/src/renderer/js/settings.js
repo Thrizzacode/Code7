@@ -118,6 +118,7 @@ const Settings = {
 
   initIisSwitcher() {
     Utils.$('btn-pick-setting-files').addEventListener('click', () => this.pickSettingFilesDir());
+    Utils.$('btn-reset-iis-setting-files').addEventListener('click', () => this.resetIisSettingFilesDefault());
     Utils.$('btn-switch-iis-version').addEventListener('click', () => this.switchIisVersion());
 
     // Enable switch button only when a version is selected
@@ -194,6 +195,19 @@ const Settings = {
     await this._loadIisVersions(dirPath);
   },
 
+  async resetIisSettingFilesDefault() {
+    const TEAM_DEFAULT_PATH = '\\\\192.168.70.17\\0-临时文件\\Code7\\SettingFiles';
+    Utils.$('iis-setting-files-path').value = TEAM_DEFAULT_PATH;
+
+    // Persist to config
+    this._config.iisSettingFilesPath = TEAM_DEFAULT_PATH;
+    await window.svnApi.saveConfig(this._config);
+
+    // Reload versions
+    await this._loadIisVersions(TEAM_DEFAULT_PATH);
+    Toast.success('路徑重置', '已恢復為團隊預設網路路徑');
+  },
+
   async switchIisVersion() {
     const settingFilesRoot = Utils.$('iis-setting-files-path').value;
     const version = Utils.$('iis-version-select').value;
@@ -227,13 +241,29 @@ const Settings = {
   open() {
     this.renderProjectsList();
     Utils.$('merge-tool-path').value = this._config.mergeToolPath || '';
+    
+    // Team Default Path
+    const TEAM_DEFAULT_PATH = '\\\\192.168.70.17\\0-临时文件\\Code7\\SettingFiles';
+    
     // Restore saved SettingFiles path
-    const savedPath = this._config.iisSettingFilesPath || '';
+    let savedPath = this._config.iisSettingFilesPath || TEAM_DEFAULT_PATH;
+    
+    // Only set as default if currently empty. 
+    // Do NOT force migrate if the user has already specified a path they want to use.
+    if (!this._config.iisSettingFilesPath) {
+      this._config.iisSettingFilesPath = savedPath;
+      window.svnApi.saveConfig(this._config);
+    }
+
     const pathInput = Utils.$('iis-setting-files-path');
     if (pathInput) {
       pathInput.value = savedPath;
       if (savedPath) this._loadIisVersions(savedPath);
     }
+    
+    // Refresh active version directly
+    this.refreshCurrentIisVersion();
+
     Utils.$('settings-overlay').style.display = 'flex';
   },
 

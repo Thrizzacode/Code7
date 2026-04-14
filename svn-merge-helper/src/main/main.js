@@ -159,7 +159,9 @@ function registerIpcHandlers() {
       const entries = fs.readdirSync(settingFilesRoot, { withFileTypes: true });
       const versions = entries
         .filter((e) => e.isDirectory())
-        .map((e) => e.name);
+        .map((e) => e.name)
+        .sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }))
+        .reverse();
       return { success: true, versions };
     } catch (err) {
       return { success: false, error: err.message, versions: [] };

@@ -39,7 +39,7 @@ function createDefaultConfig() {
     defaultPathTemplates: { ...DEFAULT_PATH_TEMPLATES },
     theme: 'physicam',
     mode: 'dark',
-    iisSettingFilesPath: ''
+    iisSettingFilesPath: '\\\\192.168.70.17\\0-临时文件\\Code7\\SettingFiles'
   };
 }
 
@@ -89,7 +89,7 @@ const ConfigManager = {
         defaultPathTemplates: config.defaultPathTemplates || { ...DEFAULT_PATH_TEMPLATES },
         theme: config.theme || 'physicam',
         mode: config.mode || 'dark',
-        iisSettingFilesPath: config.iisSettingFilesPath || ''
+        iisSettingFilesPath: config.iisSettingFilesPath || '\\\\192.168.70.17\\0-临时文件\\Code7\\SettingFiles'
       };
     } catch {
       return createDefaultConfig();
