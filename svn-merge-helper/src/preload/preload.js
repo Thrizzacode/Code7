@@ -7,7 +7,7 @@ contextBridge.exposeInMainWorld('svnApi', {
   info: (svnPath) => ipcRenderer.invoke('svn:info', svnPath),
   status: (svnPath) => ipcRenderer.invoke('svn:status', svnPath),
   merge: (sourceUrl, targetWcPath, revisions) => ipcRenderer.invoke('svn:merge', sourceUrl, targetWcPath, revisions),
-  commit: (wcPath, message) => ipcRenderer.invoke('svn:commit', wcPath, message),
+  commit: (wcPath, message, filesArray) => ipcRenderer.invoke('svn:commit', wcPath, message, filesArray),
   resolve: (filePath) => ipcRenderer.invoke('svn:resolve', filePath),
   getMergeInfo: (sourceUrl, targetWcPath) => ipcRenderer.invoke('svn:mergeinfo', sourceUrl, targetWcPath),
   update: (wcPath) => ipcRenderer.invoke('svn:update', wcPath),
@@ -31,6 +31,14 @@ contextBridge.exposeInMainWorld('svnApi', {
 
   // External Tools
   launchMergeTool: (filePath) => ipcRenderer.invoke('tool:launch-merge-tool', filePath),
+  openDiff: (filePath) => ipcRenderer.invoke('tool:open-diff', filePath),
+  openFile: (filePath) => ipcRenderer.invoke('tool:open-file', filePath),
+
+  // IIS Version Switcher
+  iisListVersions: (settingFilesRoot) => ipcRenderer.invoke('iis:list-versions', settingFilesRoot),
+  iisPickSettingFilesDir: () => ipcRenderer.invoke('iis:pick-setting-files-dir'),
+  iisSwitchVersion: (settingFilesRoot, version) => ipcRenderer.invoke('iis:switch-version', settingFilesRoot, version),
+  iisGetCurrentVersion: () => ipcRenderer.invoke('iis:get-current-version'),
 
   // App Update
   checkForUpdates: () => ipcRenderer.invoke('update:check-for-updates'),

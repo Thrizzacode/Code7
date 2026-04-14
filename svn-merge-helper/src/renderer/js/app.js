@@ -39,6 +39,9 @@ const App = {
     ThemeController.init();
     ModeController.init();
 
+    // ─── Step 5.5: Initialize View Switcher ───
+    ViewSwitcher.init();
+
     // ─── Step 6: Determine initial screen ───
     const config = Settings.getConfig();
 
@@ -75,6 +78,59 @@ const App = {
       Utils.showScreen('setup-screen');
     } else {
       this._showMainScreen(config);
+    }
+  }
+};
+
+/**
+ * ViewSwitcher — manages navigation between merge and commit views.
+ */
+const ViewSwitcher = {
+  currentView: 'merge-view',
+  init() {
+    const btnMerge = Utils.$('nav-merge-view');
+    const btnCommit = Utils.$('nav-commit-view');
+    
+    if (btnMerge) {
+      btnMerge.addEventListener('click', () => this.switchView('merge-view'));
+    }
+    if (btnCommit) {
+      btnCommit.addEventListener('click', () => this.switchView('commit-view'));
+    }
+
+    // Restore last view
+    const lastView = localStorage.getItem('code7-last-view') || 'merge-view';
+    this.switchView(lastView);
+  },
+  
+  switchView(viewId) {
+    this.currentView = viewId;
+    localStorage.setItem('code7-last-view', viewId);
+    
+    // Toggle DOM elements
+    const mergeView = Utils.$('merge-view');
+    const commitView = Utils.$('commit-view');
+    
+    if (mergeView) {
+      mergeView.style.display = viewId === 'merge-view' ? 'flex' : 'none';
+    }
+    if (commitView) {
+      commitView.style.display = viewId === 'commit-view' ? 'flex' : 'none';
+    }
+    
+    // Toggle button styles
+    const btnMerge = Utils.$('nav-merge-view');
+    const btnCommit = Utils.$('nav-commit-view');
+    
+    if (btnMerge) {
+      btnMerge.className = viewId === 'merge-view' ? 'btn btn-sm active' : 'btn btn-sm btn-ghost';
+    }
+    if (btnCommit) {
+      btnCommit.className = viewId === 'commit-view' ? 'btn btn-sm active' : 'btn btn-sm btn-ghost';
+    }
+    
+    if (viewId === 'commit-view' && window.CommitManager) {
+      CommitManager.refresh();
     }
   }
 };

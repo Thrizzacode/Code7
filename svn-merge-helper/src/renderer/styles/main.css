@@ -349,6 +349,13 @@ html, body {
   color: var(--text-primary);
 }
 
+.btn.active {
+  background: var(--accent) !important;
+  color: var(--text-inverse) !important;
+  font-weight: 600;
+  box-shadow: 0 2px 8px var(--accent-soft);
+}
+
 .btn-icon {
   width: 36px;
   height: 36px;
@@ -410,7 +417,7 @@ html, body {
   color: var(--text-muted);
 }
 
-.input-sm {
+.input-sm, .select-sm {
   padding: var(--space-xs) var(--space-sm);
   font-size: 12px;
 }
@@ -1553,4 +1560,12 @@ html, body {
 
 [data-mode="light"] .revision-table td {
   border-bottom-color: var(--border);
+}
+
+/* ─── Utility ─── */
+.text-truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 0; /* Required with table-layout:fixed to allow shrinking */
 }

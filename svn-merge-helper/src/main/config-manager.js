@@ -38,7 +38,8 @@ function createDefaultConfig() {
     mergeToolPath: '',
     defaultPathTemplates: { ...DEFAULT_PATH_TEMPLATES },
     theme: 'physicam',
-    mode: 'dark'
+    mode: 'dark',
+    iisSettingFilesPath: ''
   };
 }
 
@@ -87,7 +88,8 @@ const ConfigManager = {
         mergeToolPath: config.mergeToolPath || '',
         defaultPathTemplates: config.defaultPathTemplates || { ...DEFAULT_PATH_TEMPLATES },
         theme: config.theme || 'physicam',
-        mode: config.mode || 'dark'
+        mode: config.mode || 'dark',
+        iisSettingFilesPath: config.iisSettingFilesPath || ''
       };
     } catch {
       return createDefaultConfig();

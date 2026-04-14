@@ -17,6 +17,7 @@
       position: relative;
       display: inline-block;
     }
+
     .dropdown-menu {
       display: none;
       position: absolute;
@@ -24,15 +25,17 @@
       top: 100%;
       background-color: #1e1e26;
       min-width: 160px;
-      box-shadow: 0 8px 16px rgba(0,0,0,0.5);
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.5);
       z-index: 1000;
       border-radius: 4px;
       border: 1px solid #333;
       padding: 4px 0;
     }
+
     .dropdown:hover .dropdown-menu {
       display: block;
     }
+
     .dropdown-item {
       width: 100%;
       padding: 10px 16px;
@@ -44,20 +47,24 @@
       font-size: 14px;
       transition: background 0.2s;
     }
+
     .dropdown-item:hover {
       background-color: #2d2d3a;
       color: #fff;
     }
+
     .project-item-path {
       font-size: 11px;
       color: var(--text-muted);
       word-break: break-all;
     }
+
     .project-item-actions {
       display: flex;
       align-items: center;
       gap: 12px;
     }
+
     .project-batch-toggle {
       display: flex;
       align-items: center;
@@ -67,13 +74,15 @@
       cursor: pointer;
       user-select: none;
     }
+
     .project-batch-toggle input {
       cursor: pointer;
     }
+
     .project-batch-toggle:hover {
       color: #fff;
     }
-    
+
     /* Toast Styles */
     #toast-container {
       position: fixed;
@@ -81,6 +90,7 @@
       right: 20px;
       z-index: 9999;
     }
+
     .toast {
       position: relative;
       background-color: #2d2d3a;
@@ -88,47 +98,69 @@
       padding: 12px 20px;
       border-radius: 4px;
       margin-top: 10px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
       border-left: 4px solid #4a9eff;
       animation: slideIn 0.3s ease-out;
       min-width: 250px;
     }
-    .toast.success { border-left-color: #4caf50; }
-    .toast.error { border-left-color: #f44336; }
-    .toast.progress { 
-      border-left-color: #2196f3; 
-      padding-bottom: 18px; /* Space for the bar */
+
+    .toast.success {
+      border-left-color: #4caf50;
     }
-    
+
+    .toast.error {
+      border-left-color: #f44336;
+    }
+
+    .toast.progress {
+      border-left-color: #2196f3;
+      padding-bottom: 18px;
+      /* Space for the bar */
+    }
+
     .toast-progress-container {
       position: absolute;
       bottom: 0;
       left: 0;
       width: 100%;
       height: 4px;
-      background-color: rgba(255,255,255,0.1);
+      background-color: rgba(255, 255, 255, 0.1);
       overflow: hidden;
       border-radius: 0 0 4px 4px;
     }
+
     .toast-progress-bar {
       height: 100%;
       background-color: #4a9eff;
       width: 0%;
       transition: width 0.3s ease;
     }
+
     .toast-progress-bar.indeterminate {
       width: 50%;
       animation: indeterminate 1.5s infinite ease-in-out;
     }
-    
+
     @keyframes indeterminate {
-      0% { transform: translateX(-100%); }
-      100% { transform: translateX(200%); }
+      0% {
+        transform: translateX(-100%);
+      }
+
+      100% {
+        transform: translateX(200%);
+      }
     }
-    
+
     @keyframes slideIn {
-      from { transform: translateX(100%); opacity: 0; }
-      to { transform: translateX(0); opacity: 1; }
+      from {
+        transform: translateX(100%);
+        opacity: 0;
+      }
+
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
     }
   </style>
 </head>
@@ -167,8 +199,14 @@
   <div id="main-screen" class="screen" style="display: none;">
     <!-- Top Bar -->
     <header class="top-bar">
-      <div class="top-bar-left">
-        <h1 id="app-logo" class="app-title">Code7</h1>
+      <div class="top-bar-left" style="display: flex; align-items: center;">
+        <h1 id="app-logo" class="app-title"
+          style="margin-right: 16px; padding-right: 16px; border-right: 1px solid var(--border-color);">Code7</h1>
+        <nav class="main-nav" style="display: flex; gap: 8px;">
+          <button id="nav-merge-view" class="btn btn-sm" style="font-weight: bold; background: var(--bg-secondary);">合併
+            (Merge)</button>
+          <button id="nav-commit-view" class="btn btn-sm btn-ghost">提交 (Commit)</button>
+        </nav>
       </div>
       <div class="top-bar-center">
         <label for="project-selector" class="sr-only">選擇專案</label>
@@ -179,7 +217,8 @@
       <div class="top-bar-right">
         <!-- Theme Switcher -->
         <div class="theme-switcher" id="theme-switcher">
-          <button id="theme-switcher-btn" class="theme-switcher-btn" title="切換主題" aria-haspopup="true" aria-expanded="false">
+          <button id="theme-switcher-btn" class="theme-switcher-btn" title="切換主題" aria-haspopup="true"
+            aria-expanded="false">
             <span class="theme-swatch"></span>
             <span id="theme-current-name">PHYSICAM</span>
             <span>▾</span>
@@ -213,7 +252,8 @@
           </div>
         </div>
         <!-- Dark / Light Mode Toggle -->
-        <button id="btn-mode-toggle" class="btn btn-icon mode-toggle-btn" title="切換深色/淺色模式" aria-label="切換模式">🌙</button>
+        <button id="btn-mode-toggle" class="btn btn-icon mode-toggle-btn" title="切換深色/淺色模式"
+          aria-label="切換模式">🌙</button>
         <div class="dropdown">
           <button id="btn-sync" class="btn btn-icon" title="同步更新">🔄</button>
           <div class="dropdown-menu">
@@ -225,127 +265,216 @@
       </div>
     </header>
 
-    <!-- Branch Selector Panel -->
-    <section class="branch-panel">
-      <!-- Source -->
-      <div class="branch-side" id="source-panel">
-        <h2 class="branch-side-title">來源 (Source)</h2>
-        <div class="branch-selectors">
-          <label for="source-env">環境</label>
-          <select id="source-env" class="select" disabled>
-            <option value="">選擇環境...</option>
-            <option value="branches">branches</option>
-            <option value="qat">qat</option>
-            <option value="stg">stg</option>
-          </select>
-          <label for="source-version">版本</label>
-          <select id="source-version" class="select" disabled>
-            <option value="">選擇版本...</option>
-          </select>
+    <!-- ─── Merge View ─── -->
+    <div id="merge-view" class="view-container"
+      style="display: flex; flex-direction: column; flex: 1; overflow: hidden; min-height: 0;">
+      <!-- Branch Selector Panel -->
+      <section class="branch-panel">
+        <!-- Source -->
+        <div class="branch-side" id="source-panel">
+          <h2 class="branch-side-title">來源 (Source)</h2>
+          <div class="branch-selectors">
+            <label for="source-env">環境</label>
+            <select id="source-env" class="select" disabled>
+              <option value="">選擇環境...</option>
+              <option value="branches">branches</option>
+              <option value="qat">qat</option>
+              <option value="stg">stg</option>
+            </select>
+            <label for="source-version">版本</label>
+            <select id="source-version" class="select" disabled>
+              <option value="">選擇版本...</option>
+            </select>
+          </div>
+          <div id="source-path" class="resolved-path" title=""></div>
+          <div id="source-sync-container" class="sync-action-container"></div>
         </div>
-        <div id="source-path" class="resolved-path" title=""></div>
-        <div id="source-sync-container" class="sync-action-container"></div>
-      </div>
 
-      <!-- Direction Arrow -->
-      <div class="merge-direction">
-        <div class="merge-arrow">→</div>
-      </div>
-
-      <!-- Target -->
-      <div class="branch-side" id="target-panel">
-        <h2 class="branch-side-title">目標 (Target)</h2>
-        <div class="branch-selectors">
-          <label for="target-env">環境</label>
-          <select id="target-env" class="select" disabled>
-            <option value="">選擇環境...</option>
-            <option value="branches">branches</option>
-            <option value="qat">qat</option>
-            <option value="stg">stg</option>
-          </select>
-          <label for="target-version">版本</label>
-          <select id="target-version" class="select" disabled>
-            <option value="">選擇版本...</option>
-          </select>
+        <!-- Direction Arrow -->
+        <div class="merge-direction">
+          <div class="merge-arrow">→</div>
         </div>
-        <div id="target-path" class="resolved-path" title=""></div>
-        <div id="target-sync-container" class="sync-action-container"></div>
+
+        <!-- Target -->
+        <div class="branch-side" id="target-panel">
+          <h2 class="branch-side-title">目標 (Target)</h2>
+          <div class="branch-selectors">
+            <label for="target-env">環境</label>
+            <select id="target-env" class="select" disabled>
+              <option value="">選擇環境...</option>
+              <option value="branches">branches</option>
+              <option value="qat">qat</option>
+              <option value="stg">stg</option>
+            </select>
+            <label for="target-version">版本</label>
+            <select id="target-version" class="select" disabled>
+              <option value="">選擇版本...</option>
+            </select>
+          </div>
+          <div id="target-path" class="resolved-path" title=""></div>
+          <div id="target-sync-container" class="sync-action-container"></div>
+        </div>
+      </section>
+
+      <!-- Merge Flow Warning -->
+      <div id="merge-flow-warning" class="warning-bar" style="display: none;">
+        <span class="warning-icon">⚠</span>
+        <span id="merge-flow-warning-text"></span>
+        <button id="btn-dismiss-warning" class="btn btn-sm btn-ghost">確認繼續</button>
       </div>
-    </section>
 
-    <!-- Merge Flow Warning -->
-    <div id="merge-flow-warning" class="warning-bar" style="display: none;">
-      <span class="warning-icon">⚠</span>
-      <span id="merge-flow-warning-text"></span>
-      <button id="btn-dismiss-warning" class="btn btn-sm btn-ghost">確認繼續</button>
-    </div>
-
-    <!-- Revision Picker -->
-    <section class="revision-section">
-      <div class="revision-toolbar">
-        <h2 class="revision-title">Revisions</h2>
-        <div class="revision-filter" style="position: relative; display: flex; align-items: center;">
-          <input type="text" id="revision-filter-input" class="input" placeholder="搜尋 revision、作者、訊息..." style="padding-right: 35px;" />
-          <div class="help-tooltip-container" style="position: absolute; right: 10px; margin-left: 0;">
-            <span class="help-icon">ℹ️</span>
-            <div class="help-tooltip">
-              <div class="help-tooltip-title">💡 進階過濾：支援 RegExp 的正規表達式</div>
-              <ul>
-                <li><code>A|B</code> 搜尋包含 A 或 B 的文字，例如：<code>[bug|fix]</code></li>
-                <li><code>^123</code> 狹窄搜尋：以 123 <strong>開頭</strong> 的號碼</li>
-                <li><code>\.js$</code> 狹窄搜尋：以 .js <strong>結尾</strong> 的字眼</li>
-              </ul>
+      <!-- Revision Picker -->
+      <section class="revision-section">
+        <div class="revision-toolbar">
+          <h2 class="revision-title">Revisions</h2>
+          <div class="revision-filter" style="position: relative; display: flex; align-items: center;">
+            <input type="text" id="revision-filter-input" class="input" placeholder="搜尋 revision、作者、訊息..."
+              style="padding-right: 35px;" />
+            <div class="help-tooltip-container" style="position: absolute; right: 10px; margin-left: 0;">
+              <span class="help-icon">ℹ️</span>
+              <div class="help-tooltip">
+                <div class="help-tooltip-title">💡 進階過濾：支援 RegExp 的正規表達式</div>
+                <ul>
+                  <li><code>A|B</code> 搜尋包含 A 或 B 的文字，例如：<code>[bug|fix]</code></li>
+                  <li><code>^123</code> 狹窄搜尋：以 123 <strong>開頭</strong> 的號碼</li>
+                  <li><code>\.js$</code> 狹窄搜尋：以 .js <strong>結尾</strong> 的字眼</li>
+                </ul>
+              </div>
             </div>
           </div>
+          <div class="revision-actions">
+            <label class="checkbox-label">
+              <input type="checkbox" id="select-all-revisions" />
+              <span>全選</span>
+            </label>
+            <span id="selection-summary" class="selection-summary">尚未選取</span>
+          </div>
         </div>
-        <div class="revision-actions">
-          <label class="checkbox-label">
-            <input type="checkbox" id="select-all-revisions" />
-            <span>全選</span>
-          </label>
-          <span id="selection-summary" class="selection-summary">尚未選取</span>
+
+        <!-- Revision Table -->
+        <div class="revision-table-wrapper">
+          <table class="revision-table" id="revision-table">
+            <thead>
+              <tr>
+                <th class="col-check"></th>
+                <th class="col-rev">Revision</th>
+                <th class="col-author">Author</th>
+                <th class="col-date">Date</th>
+                <th class="col-message">Message</th>
+              </tr>
+            </thead>
+            <tbody id="revision-tbody">
+              <!-- Populated by JS -->
+            </tbody>
+          </table>
+          <div id="revision-empty" class="empty-state" style="display: none;">
+            <p>請先選擇來源與目標分支</p>
+          </div>
+          <div id="revision-loading" class="loading-state" style="display: none;">
+            <div class="spinner"></div>
+            <p>載入中...</p>
+          </div>
+        </div>
+
+        <div class="revision-footer">
+          <button id="btn-load-more" class="btn btn-ghost" style="display: none;">載入更多</button>
+        </div>
+      </section>
+
+      <!-- Merge Action Bar -->
+      <footer class="action-bar">
+        <div class="action-bar-info">
+          <span id="merge-summary"></span>
+        </div>
+        <button id="btn-merge" class="btn btn-primary btn-lg" disabled>
+          執行合併 (Merge)
+        </button>
+      </footer>
+    </div> <!-- End merge-view -->
+
+    <!-- ─── Commit View ─── -->
+    <div id="commit-view" class="view-container"
+      style="display: none; padding: 20px; flex: 1; flex-direction:column; gap:16px; min-height: 0;">
+
+      <!-- Commit Branch Selection (Compacted) -->
+      <div class="commit-toolbar"
+        style="display: flex; align-items: center; gap: 12px; background: var(--bg-secondary); padding: 12px 16px; border-radius: var(--radius-md); border: 1px solid var(--border);">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <label for="commit-env"
+            style="font-size: 11px; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">環境</label>
+          <select id="commit-env" class="select select-sm" style="width: 120px;" disabled>
+            <option value="">選擇環境...</option>
+            <option value="branches">branches</option>
+            <option value="qat">qat</option>
+            <option value="stg">stg</option>
+          </select>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <label for="commit-version"
+            style="font-size: 11px; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">版本</label>
+          <select id="commit-version" class="select select-sm" style="width: 160px;" disabled>
+            <option value="">選擇版本...</option>
+          </select>
+        </div>
+        <div id="commit-sync-container" class="sync-action-container"
+          style="margin-top: 0; min-height: auto; flex: 1; display: flex; justify-content: flex-end;"></div>
+      </div>
+
+      <!-- Commit Header (Message) -->
+      <div class="commit-header"
+        style="background: var(--bg-secondary); padding: 16px; border-radius: var(--radius-md);">
+        <h2 style="margin: 0 0 8px 0; font-size: 16px;">提交訊息 (Commit Message)</h2>
+        <textarea id="standalone-commit-message" class="commit-textarea" placeholder="輸入提交訊息..."
+          style="width: 100%; min-height: 80px;"></textarea>
+      </div>
+
+      <!-- Commit File List -->
+      <div class="commit-files-section"
+        style="flex: 1; display: flex; flex-direction: column; background: var(--bg-secondary); border-radius: var(--radius-md); overflow: hidden;">
+        <div class="commit-files-toolbar"
+          style="padding: 12px 16px; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between;">
+          <div style="display: flex; gap: 16px;">
+            <label class="checkbox-label">
+              <input type="checkbox" id="commit-select-all" />全選
+            </label>
+            <label class="checkbox-label" style="color: var(--text-secondary);">
+              <input type="checkbox" id="commit-show-unversioned" checked />顯示未追蹤檔案 (Unversioned)
+            </label>
+          </div>
+          <button id="btn-refresh-status" class="btn btn-sm btn-ghost" title="重新整理狀態">🔄 整理</button>
+        </div>
+
+        <div class="commit-table-wrapper" style="flex: 1; overflow-y: auto; overflow-x: hidden;">
+          <table class="revision-table" id="commit-table" style="table-layout: fixed; width: 100%;">
+            <thead>
+              <tr>
+                <th style="width: 40px; padding-left: 16px;"></th>
+                <th style="width: 80px;">狀態</th>
+                <th style="width: auto; overflow: hidden;">路徑</th>
+                <th style="width: 55px; text-align: center;">操作</th>
+              </tr>
+            </thead>
+            <tbody id="commit-tbody">
+              <!-- populated by JS -->
+            </tbody>
+          </table>
+          <div id="commit-empty-state" class="empty-state" style="display: none;">
+            <p>工作區目前沒有變更</p>
+          </div>
+          <div id="commit-loading-state" class="loading-state" style="display: none;">
+            <div class="spinner"></div>
+            <p>掃描中...</p>
+          </div>
         </div>
       </div>
 
-      <!-- Revision Table -->
-      <div class="revision-table-wrapper">
-        <table class="revision-table" id="revision-table">
-          <thead>
-            <tr>
-              <th class="col-check"></th>
-              <th class="col-rev">Revision</th>
-              <th class="col-author">Author</th>
-              <th class="col-date">Date</th>
-              <th class="col-message">Message</th>
-            </tr>
-          </thead>
-          <tbody id="revision-tbody">
-            <!-- Populated by JS -->
-          </tbody>
-        </table>
-        <div id="revision-empty" class="empty-state" style="display: none;">
-          <p>請先選擇來源與目標分支</p>
-        </div>
-        <div id="revision-loading" class="loading-state" style="display: none;">
-          <div class="spinner"></div>
-          <p>載入中...</p>
-        </div>
+      <!-- Commit Action -->
+      <div class="commit-action-bar"
+        style="display: flex; justify-content: flex-end; align-items: center; gap: 16px; margin-top: auto;">
+        <span id="commit-selection-summary" style="font-size: 13px; color: var(--text-secondary);">已選擇 0 個檔案</span>
+        <button id="btn-standalone-commit" class="btn btn-primary" disabled>提交 (Commit)</button>
       </div>
-
-      <div class="revision-footer">
-        <button id="btn-load-more" class="btn btn-ghost" style="display: none;">載入更多</button>
-      </div>
-    </section>
-
-    <!-- Merge Action Bar -->
-    <footer class="action-bar">
-      <div class="action-bar-info">
-        <span id="merge-summary"></span>
-      </div>
-      <button id="btn-merge" class="btn btn-primary btn-lg" disabled>
-        執行合併 (Merge)
-      </button>
-    </footer>
+    </div>
   </div>
 
   <!-- ─── Modal Overlay ─── -->
@@ -389,12 +518,39 @@
           <button id="btn-save-merge-tool" class="btn btn-primary">儲存工具設定</button>
         </div>
 
+        <!-- IIS Version Switcher (Requirement: User can switch IIS version from Settings) -->
+        <div class="settings-section">
+          <h3>IIS 版本設定</h3>
+          <div class="form-group" style="margin-bottom: 12px; padding: 10px; background: rgba(255,255,255,0.05); border-radius: 6px;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <span style="font-size: 13px; color: var(--text-muted);">當前生效版本：</span>
+              <span id="iis-current-version-active" class="badge badge-primary" style="font-size: 14px;">偵測中...</span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="iis-setting-files-path">SettingFiles 根目錄</label>
+            <div style="display: flex; gap: 8px; align-items: center;">
+              <input type="text" id="iis-setting-files-path" class="input" placeholder="選擇 SettingFiles 資料夾路徑..." readonly style="flex: 1;" />
+              <button id="btn-pick-setting-files" class="btn btn-sm btn-secondary">📂 瀏覽</button>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="iis-version-select">目標版本</label>
+            <select id="iis-version-select" class="input" disabled>
+              <option value="">— 請先選擇 SettingFiles 目錄 —</option>
+            </select>
+          </div>
+          <button id="btn-switch-iis-version" class="btn btn-primary" disabled>🔄 套用並切換 IIS 版本</button>
+          <p style="margin-top: 8px; font-size: 12px; color: var(--text-muted);">套用時會彈出 UAC 授權視窗（Windows 安全性確認），請點選「是」以完成切換。</p>
+        </div>
+
         <!-- App Update (Requirement: Manual Update Check) -->
         <div class="settings-section">
           <h3>App 更新</h3>
           <div class="update-card">
             <div class="update-info">
-              <span class="app-version-label">Code7 <span id="current-app-version" class="badge badge-secondary"></span></span>
+              <span class="app-version-label">Code7 <span id="current-app-version"
+                  class="badge badge-secondary"></span></span>
               <div id="update-status-text" class="update-status-text">已是最新版本</div>
             </div>
             <div id="update-progress-container" class="update-progress-container" style="display: none;">
@@ -434,6 +590,7 @@
   <script src="js/branch-selector.js"></script>
   <script src="js/revision-picker.js"></script>
   <script src="js/merge-executor.js"></script>
+  <script src="js/commit-manager.js"></script>
   <script src="js/app.js"></script>
   <!-- Progress Toast Container -->
   <div id="toast-container"></div>

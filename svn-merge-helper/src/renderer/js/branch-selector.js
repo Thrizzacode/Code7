@@ -9,8 +9,11 @@ const BranchSelector = {
   _targetPath: null,
   _sourceWcPath: null,
   _targetWcPath: null,
+  _commitPath: null,
+  _commitWcPath: null,
   _sourceVersions: [],
   _targetVersions: [],
+  _commitVersions: [],
   _warningDismissed: false,
 
   // Allowed merge flow order
@@ -27,6 +30,10 @@ const BranchSelector = {
     // Target selectors
     Utils.$('target-env').addEventListener('change', () => this.onEnvChange('target'));
     Utils.$('target-version').addEventListener('change', () => this.onSelectionChange('target'));
+
+    // Commit selectors
+    Utils.$('commit-env').addEventListener('change', () => this.onEnvChange('commit'));
+    Utils.$('commit-version').addEventListener('change', () => this.onSelectionChange('commit'));
 
     // Warning dismiss
     Utils.$('btn-dismiss-warning').addEventListener('click', () => {
@@ -78,10 +85,15 @@ const BranchSelector = {
     // Reset env selectors & clear versions
     Utils.$('source-env').value = '';
     Utils.$('target-env').value = '';
+    Utils.$('commit-env').value = '';
     this._populateVersions('source-version', []);
     this._populateVersions('target-version', []);
+    this._populateVersions('commit-version', []);
     Utils.$('source-path').textContent = '';
     Utils.$('target-path').textContent = '';
+    const cp = Utils.$('commit-path');
+    if (cp) cp.textContent = '';
+    
     Utils.$('source-path').classList.remove('active');
     Utils.$('target-path').classList.remove('active');
     Utils.$('source-path').classList.remove('warning');
@@ -89,9 +101,11 @@ const BranchSelector = {
 
     this._sourceVersions = [];
     this._targetVersions = [];
+    this._commitVersions = [];
 
     this._sourcePath = null;
     this._targetPath = null;
+    this._commitPath = null;
     this._warningDismissed = false;
     Utils.$('merge-flow-warning').style.display = 'none';
 
@@ -104,23 +118,28 @@ const BranchSelector = {
     if (this._currentProject) {
       Utils.$('source-env').value = 'branches';
       Utils.$('target-env').value = 'qat';
+      Utils.$('commit-env').value = 'branches';
       // Trigger update logic
       this.onEnvChange('source');
       this.onEnvChange('target');
+      this.onEnvChange('commit');
     }
   },
 
   resetSelectors() {
-    ['source-version', 'target-version'].forEach(id => {
+    ['source-version', 'target-version', 'commit-version'].forEach(id => {
       const sel = Utils.$(id);
       sel.innerHTML = '<option value="">選擇版本...</option>';
       sel.disabled = true;
     });
-    ['source-env', 'target-env'].forEach(id => {
+    ['source-env', 'target-env', 'commit-env'].forEach(id => {
       Utils.$(id).value = '';
     });
     Utils.$('source-path').textContent = '';
     Utils.$('target-path').textContent = '';
+    const cp = Utils.$('commit-path');
+    if (cp) cp.textContent = '';
+
     Utils.$('source-path').classList.remove('active');
     Utils.$('target-path').classList.remove('active');
     this._updateDisabledState();
@@ -130,13 +149,13 @@ const BranchSelector = {
     const isProjectSelected = !!this._currentProject;
     
     // Toggle environments
-    ['source-env', 'target-env'].forEach(id => {
+    ['source-env', 'target-env', 'commit-env'].forEach(id => {
       Utils.$(id).disabled = !isProjectSelected;
     });
 
     // Handle versions - if project is unselected, ensure they are also locked
     if (!isProjectSelected) {
-      ['source-version', 'target-version'].forEach(id => {
+      ['source-version', 'target-version', 'commit-version'].forEach(id => {
         const sel = Utils.$(id);
         sel.innerHTML = '<option value="">選擇版本...</option>';
         sel.disabled = true;
@@ -222,7 +241,8 @@ const BranchSelector = {
 
     this._populateVersions(versionSelectId, versions);
     if (side === 'source') this._sourceVersions = versions;
-    else this._targetVersions = versions;
+    else if (side === 'target') this._targetVersions = versions;
+    else if (side === 'commit') this._commitVersions = versions;
 
     this.onSelectionChange(side);
   },
@@ -238,11 +258,14 @@ const BranchSelector = {
     const pathEl = Utils.$(`${side}-path`);
 
     if (!env || !version) {
-      pathEl.textContent = '';
-      pathEl.classList.remove('active');
-      pathEl.title = '';
+      if (pathEl) {
+        pathEl.textContent = '';
+        pathEl.classList.remove('active');
+        pathEl.title = '';
+      }
       if (side === 'source') { this._sourcePath = null; this._sourceWcPath = null; }
-      else { this._targetPath = null; this._targetWcPath = null; }
+      else if (side === 'target') { this._targetPath = null; this._targetWcPath = null; }
+      else if (side === 'commit') { this._commitPath = null; this._commitWcPath = null; }
       this._checkAndLoadRevisions();
       return;
     }
@@ -260,25 +283,35 @@ const BranchSelector = {
     const repoUrl = `${this._currentProject.repoUrl}/${relativePath}`;
     const wcPath = `${this._currentProject.workingCopyRoot}/${relativePath}`;
 
-    const versions = side === 'source' ? this._sourceVersions : this._targetVersions;
+    const versions = side === 'source' ? this._sourceVersions : 
+                     side === 'target' ? this._targetVersions : this._commitVersions;
     const versionData = versions.find(v => (typeof v === 'string' ? v : v.version) === version);
     const isLocal = !versionData || (typeof versionData === 'string') || versionData.presentLocally;
 
-    pathEl.textContent = isLocal ? repoUrl : `⚠ ${repoUrl}`;
-    pathEl.title = (isLocal ? '' : '[尚未獲取本地代碼]\n') + `Repo: ${repoUrl}\nWC: ${wcPath}`;
-    pathEl.classList.add('active');
-    if (!isLocal) {
-      pathEl.classList.add('warning');
-    } else {
-      pathEl.classList.remove('warning');
+    if (pathEl) {
+      pathEl.textContent = isLocal ? repoUrl : `⚠ ${repoUrl}`;
+      pathEl.title = (isLocal ? '' : '[尚未獲取本地代碼]\n') + `Repo: ${repoUrl}\nWC: ${wcPath}`;
+      pathEl.classList.add('active');
+      if (!isLocal) {
+        pathEl.classList.add('warning');
+      } else {
+        pathEl.classList.remove('warning');
+      }
     }
 
     if (side === 'source') {
       this._sourcePath = repoUrl;
       this._sourceWcPath = wcPath;
-    } else {
+    } else if (side === 'target') {
       this._targetPath = repoUrl;
       this._targetWcPath = wcPath;
+    } else if (side === 'commit') {
+      this._commitPath = repoUrl;
+      this._commitWcPath = wcPath;
+      // Also notify CommitManager if it exists
+      if (window.CommitManager) {
+        window.CommitManager.onSelectionChange(wcPath);
+      }
     }
 
     // Update Sync Button visibility
@@ -417,12 +450,16 @@ const BranchSelector = {
     return {
       sourceUrl: this._sourcePath,
       targetUrl: this._targetPath,
+      commitUrl: this._commitPath,
       sourceWcPath: this._sourceWcPath,
       targetWcPath: this._targetWcPath,
+      commitWcPath: this._commitWcPath,
       sourceEnv: Utils.$('source-env').value,
       targetEnv: Utils.$('target-env').value,
+      commitEnv: Utils.$('commit-env').value,
       sourceVersion: Utils.$('source-version').value,
-      targetVersion: Utils.$('target-version').value
+      targetVersion: Utils.$('target-version').value,
+      commitVersion: Utils.$('commit-version').value
     };
   },
 
@@ -441,13 +478,14 @@ const BranchSelector = {
   },
 
   /**
-   * Manually trigger a refresh of versions for both sides.
+   * Manually trigger a refresh of versions for all sides.
    */
   async refreshVersions() {
     if (!this._currentProject) return;
     await Promise.all([
       this.onEnvChange('source'),
-      this.onEnvChange('target')
+      this.onEnvChange('target'),
+      this.onEnvChange('commit')
     ]);
   }
 };

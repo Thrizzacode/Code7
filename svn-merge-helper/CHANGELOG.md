@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.6.0] - 2026-04-14
+
+### Added
+- **IIS 版本切換器 (IIS Switcher)**：整合至設定面板，支援一鍵切換環境分支版本（自動處理 `hosts` 與 `applicationHost.config`）。
+- **當前版本自動偵測**：程式會自動解析 IIS 設定檔並顯示當前生效的分支版本。
+- **權限自動提升 (UAC)**：採用 PowerShell 編碼指令技術，確保在修改系統檔案時能正確觸發選單並執行，避免字符解析錯誤。
+- **路徑持久化**：`SettingFiles` 根路徑現在會自動記憶，重啟 App 無需重新選擇。
+
+### Fixed
+- **引號解析錯誤**：修正了在某些環境下 PowerShell 傳遞指令時引號脫逸導致的執行失敗問題。
+- **UI 優化**：下拉選單新增佔位符，防止在未選擇版本時執行切換。
+
 ## [1.5.0] - 2026-04-10
 
 ### Added

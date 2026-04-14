@@ -35,6 +35,9 @@ const Settings = {
     Utils.$('btn-detect-merge-tool').addEventListener('click', () => this.detectMergeTool());
     Utils.$('btn-save-merge-tool').addEventListener('click', () => this.saveMergeTool());
 
+    // IIS Version Switcher
+    this.initIisSwitcher();
+
     // App Update (Requirement: Manual Update Check)
     Utils.$('btn-check-updates').addEventListener('click', () => this.manualCheckUpdates());
     Utils.$('btn-restart-install').addEventListener('click', () => window.svnApi.quitAndInstall());
@@ -111,9 +114,126 @@ const Settings = {
     }
   },
 
+  // ── IIS Version Switcher ────────────────────────────────────────────────────
+
+  initIisSwitcher() {
+    Utils.$('btn-pick-setting-files').addEventListener('click', () => this.pickSettingFilesDir());
+    Utils.$('btn-switch-iis-version').addEventListener('click', () => this.switchIisVersion());
+
+    // Enable switch button only when a version is selected
+    Utils.$('iis-version-select').addEventListener('change', (e) => {
+      Utils.$('btn-switch-iis-version').disabled = !e.target.value;
+    });
+
+    // Detect current version on init
+    this.refreshCurrentIisVersion();
+  },
+
+  async refreshCurrentIisVersion() {
+    const activeLabel = Utils.$('iis-current-version-active');
+    if (!activeLabel) return;
+
+    activeLabel.textContent = '偵測中...';
+    try {
+      const result = await window.svnApi.iisGetCurrentVersion();
+      if (result.success) {
+        activeLabel.textContent = result.version;
+        activeLabel.className = 'badge badge-primary';
+      } else {
+        activeLabel.textContent = '未偵測到';
+        activeLabel.className = 'badge badge-secondary';
+        console.warn('IIS version detection failed:', result.error);
+      }
+    } catch (err) {
+      activeLabel.textContent = '偵測失敗';
+      activeLabel.className = 'badge badge-secondary';
+    }
+  },
+
+  async _loadIisVersions(settingFilesRoot) {
+    const select = Utils.$('iis-version-select');
+    select.innerHTML = '<option value="">載入中...</option>';
+    select.disabled = true;
+
+    const result = await window.svnApi.iisListVersions(settingFilesRoot);
+    select.innerHTML = '';
+
+    if (!result.success || result.versions.length === 0) {
+      select.innerHTML = '<option value="">— 找不到版本子目錄 —</option>';
+      return;
+    }
+
+    // Add placeholder first
+    const placeholder = document.createElement('option');
+    placeholder.value = '';
+    placeholder.textContent = '— 請選擇目標版本 —';
+    select.appendChild(placeholder);
+
+    result.versions.forEach((ver) => {
+      const opt = document.createElement('option');
+      opt.value = ver;
+      opt.textContent = ver;
+      select.appendChild(opt);
+    });
+    select.disabled = false;
+    // Reset switch button until user picks one
+    Utils.$('btn-switch-iis-version').disabled = true;
+  },
+
+  async pickSettingFilesDir() {
+    const result = await window.svnApi.iisPickSettingFilesDir();
+    if (result.canceled || !result.path) return;
+
+    const dirPath = result.path;
+    Utils.$('iis-setting-files-path').value = dirPath;
+
+    // Persist to config
+    this._config.iisSettingFilesPath = dirPath;
+    await window.svnApi.saveConfig(this._config);
+
+    await this._loadIisVersions(dirPath);
+  },
+
+  async switchIisVersion() {
+    const settingFilesRoot = Utils.$('iis-setting-files-path').value;
+    const version = Utils.$('iis-version-select').value;
+
+    if (!settingFilesRoot || !version) {
+      Toast.warning('IIS 切換', '請先選擇 SettingFiles 目錄與目標版本');
+      return;
+    }
+
+    const btn = Utils.$('btn-switch-iis-version');
+    btn.disabled = true;
+    btn.textContent = '切換中，請稍候...';
+
+    try {
+      const result = await window.svnApi.iisSwitchVersion(settingFilesRoot, version);
+      if (result.success) {
+        Toast.success('IIS 切換成功', `已套用版本 ${version}，請重新整理 IIS 管理員確認。`);
+        // Refresh current version status
+        this.refreshCurrentIisVersion();
+      } else {
+        Toast.error('IIS 切換失敗', result.error || '請確認已授權 UAC 提示並重試。');
+      }
+    } catch (err) {
+      Toast.error('IIS 切換失敗', err.message || '發生未知錯誤');
+    } finally {
+      btn.textContent = '🔄 套用並切換 IIS 版本';
+      btn.disabled = false;
+    }
+  },
+
   open() {
     this.renderProjectsList();
     Utils.$('merge-tool-path').value = this._config.mergeToolPath || '';
+    // Restore saved SettingFiles path
+    const savedPath = this._config.iisSettingFilesPath || '';
+    const pathInput = Utils.$('iis-setting-files-path');
+    if (pathInput) {
+      pathInput.value = savedPath;
+      if (savedPath) this._loadIisVersions(savedPath);
+    }
     Utils.$('settings-overlay').style.display = 'flex';
   },
 

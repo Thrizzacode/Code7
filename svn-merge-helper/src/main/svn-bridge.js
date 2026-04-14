@@ -88,6 +88,7 @@ function parseStatusXml(xml) {
 
   return entries.map(entry => ({
     path: entry['@_path'] || '',
+    itemStatus: (entry['wc-status'] && entry['wc-status']['@_item']) || 'none',
     propsStatus: (entry['wc-status'] && entry['wc-status']['@_props']) || 'none'
   }));
 }
@@ -214,15 +215,36 @@ const SvnBridge = {
    * Commit changes in working copy.
    * @param {string} wcPath
    * @param {string} message
+   * @param {string[]} [filesArray] - Optional array of specific files to commit
    * @returns {Promise<{success: boolean, revision?: number, error?: object}>}
    */
-  async commit(wcPath, message) {
+  async commit(wcPath, message, filesArray) {
     try {
-      const stdout = await execSvn(['commit', '-m', message, wcPath], { timeout: 120000 });
-      // Parse committed revision from output
-      const match = stdout.match(/Committed revision (\d+)/i);
-      const revision = match ? parseInt(match[1], 10) : null;
-      return { success: true, revision, output: stdout };
+      if (filesArray && filesArray.length > 0) {
+        // Find unversioned files and add them
+        const statusRes = await this.status(wcPath);
+        if (statusRes.success && statusRes.entries) {
+          const unversionedPaths = statusRes.entries
+            .filter(e => e.itemStatus === 'unversioned')
+            .map(e => e.path);
+          
+          const toAdd = filesArray.filter(f => unversionedPaths.includes(f));
+          if (toAdd.length > 0) {
+             await execSvn(['add', ...toAdd], { timeout: 60000 });
+          }
+        }
+        
+        const args = ['commit', '-m', message, ...filesArray];
+        const stdout = await execSvn(args, { timeout: 120000 });
+        const match = stdout.match(/Committed revision (\d+)/i);
+        const revision = match ? parseInt(match[1], 10) : null;
+        return { success: true, revision, output: stdout };
+      } else {
+        const stdout = await execSvn(['commit', '-m', message, wcPath], { timeout: 120000 });
+        const match = stdout.match(/Committed revision (\d+)/i);
+        const revision = match ? parseInt(match[1], 10) : null;
+        return { success: true, revision, output: stdout };
+      }
     } catch (err) {
       return { success: false, error: err };
     }
