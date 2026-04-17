@@ -373,7 +373,10 @@
               <input type="checkbox" id="commit-show-unversioned" checked />顯示未追蹤檔案 (Unversioned)
             </label>
           </div>
-          <button id="btn-refresh-status" class="btn btn-sm btn-ghost" title="重新整理狀態">🔄 整理</button>
+          <div style="display: flex; gap: 8px;">
+            <button id="btn-show-project-log" class="btn btn-sm btn-ghost" title="查看專案歷史紀錄">🕒 專案歷史</button>
+            <button id="btn-refresh-status" class="btn btn-sm btn-ghost" title="重新整理狀態">🔄 整理</button>
+          </div>
         </div>
 
         <div class="commit-table-wrapper" style="flex: 1; overflow-y: auto; overflow-x: hidden;">
@@ -383,7 +386,7 @@
                 <th style="width: 40px; padding-left: 16px;"></th>
                 <th style="width: 80px;">狀態</th>
                 <th style="width: auto; overflow: hidden;">路徑</th>
-                <th style="width: 55px; text-align: center;">操作</th>
+                <th style="width: 80px; text-align: center;">操作</th>
               </tr>
             </thead>
             <tbody id="commit-tbody">
@@ -404,6 +407,7 @@
       <div class="commit-action-bar"
         style="display: flex; justify-content: flex-end; align-items: center; gap: 16px; margin-top: auto;">
         <span id="commit-selection-summary" style="font-size: 13px; color: var(--text-secondary);">已選擇 0 個檔案</span>
+        <button id="btn-batch-revert" class="btn btn-secondary" disabled>還原已選取 (Revert)</button>
         <button id="btn-standalone-commit" class="btn btn-primary" disabled>提交 (Commit)</button>
       </div>
     </div>
@@ -519,6 +523,7 @@
   <script src="js/utils.js"></script>
   <script src="js/toast.js"></script>
   <script src="js/modal.js"></script>
+  <script src="js/log-manager.js"></script>
   <script src="js/settings.js"></script>
   <script src="js/branch-selector.js"></script>
   <script src="js/revision-picker.js"></script>

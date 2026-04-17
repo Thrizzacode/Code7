@@ -51,12 +51,24 @@ function parseLogXml(xml) {
 
   const entries = Array.isArray(parsed.log.logentry) ? parsed.log.logentry : [parsed.log.logentry];
 
-  return entries.map(entry => ({
-    revision: entry['@_revision'],
-    author: entry.author || 'unknown',
-    date: entry.date || '',
-    message: entry.msg || ''
-  }));
+  return entries.map(entry => {
+    let changedPaths = [];
+    if (entry.paths && entry.paths.path) {
+      const paths = Array.isArray(entry.paths.path) ? entry.paths.path : [entry.paths.path];
+      changedPaths = paths.map(p => ({
+        action: p['@_action'],
+        path: p['#text'] || p['#cdata-section'] || ''
+      }));
+    }
+
+    return {
+      revision: entry['@_revision'],
+      author: entry.author || 'unknown',
+      date: entry.date || '',
+      message: entry.msg || '',
+      changedPaths
+    };
+  });
 }
 
 /**
@@ -141,11 +153,21 @@ const SvnBridge = {
   async log(svnPath, options = {}) {
     try {
       const args = ['log', '--xml'];
+      
+      // Handle limit
       const limit = options.limit || 100;
       args.push('--limit', String(limit));
 
-      if (options.startRevision && options.endRevision) {
+      // Handle revision range or single revision
+      if (options.revision) {
+        args.push('--revision', String(options.revision));
+      } else if (options.startRevision && options.endRevision) {
         args.push('--revision', `${options.startRevision}:${options.endRevision}`);
+      }
+
+      // Handle verbose
+      if (options.verbose) {
+        args.push('--verbose');
       }
 
       args.push(svnPath);
@@ -337,6 +359,21 @@ const SvnBridge = {
   async update(wcPath) {
     try {
       const stdout = await execSvn(['update', wcPath], { timeout: 120000 });
+      return { success: true, output: stdout };
+    } catch (err) {
+      return { success: false, error: err };
+    }
+  },
+
+  /**
+   * Revert changes in a working copy path.
+   * @param {string|string[]} targetPath - Path or array of paths to revert
+   * @returns {Promise<{success: boolean, output?: string, error?: object}>}
+   */
+  async revert(targetPath) {
+    try {
+      const paths = Array.isArray(targetPath) ? targetPath : [targetPath];
+      const stdout = await execSvn(['revert', ...paths], { timeout: 60000 });
       return { success: true, output: stdout };
     } catch (err) {
       return { success: false, error: err };

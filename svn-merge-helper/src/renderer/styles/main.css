@@ -865,8 +865,8 @@ html, body {
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-lg);
   width: 90%;
-  max-width: 560px;
-  max-height: 80vh;
+  max-width: 1000px;
+  max-height: 85vh;
   display: flex;
   flex-direction: column;
   animation: slideUp var(--transition-slow);
@@ -1579,5 +1579,133 @@ html, body {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  max-width: 0; /* Required with table-layout:fixed to allow shrinking */
+  max-width: 0;
+}
+
+/* ─── Log Modal ─── */
+.log-modal-container {
+  display: flex;
+  flex-direction: column;
+  height: 700px;
+  max-height: 80vh;
+  gap: var(--space-md);
+}
+
+.log-filter-bar {
+  display: flex;
+  gap: var(--space-md);
+  padding-bottom: var(--space-sm);
+  border-bottom: 1px solid var(--border);
+}
+
+.log-main-split {
+  display: flex;
+  flex-direction: column; /* 恢復為上下堆疊 */
+  flex: 1;
+  overflow: hidden;
+  gap: var(--space-md);
+}
+
+.log-list-section {
+  flex: 1; /* 1:1 分配，避免下方被推太遠 */
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-secondary);
+}
+
+.log-detail-section {
+  flex: 1; /* 1:1 分配 */
+  border-top: 2px solid var(--border); /* 恢復為頂部邊線 */
+  border-left: none;
+  padding-top: var(--space-md);
+  padding-left: 0;
+  overflow-y: auto;
+  overflow-x: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.log-entry-row {
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+
+.log-entry-row:hover {
+  background: var(--bg-hover);
+}
+
+.log-entry-row.active {
+  background: var(--accent-soft) !important;
+}
+
+.log-entry-row.active td:first-child {
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+
+.log-message-box {
+  background: var(--bg-tertiary);
+  padding: var(--space-md);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-family);
+  font-size: 13px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-all;
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+  margin-top: 8px;
+}
+
+.log-path-list {
+  margin-top: var(--space-sm);
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+
+.path-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: 4px 8px;
+  border-radius: 4px;
+  white-space: nowrap; /* 禁止換行 */
+  cursor: pointer; /* 加入指標手勢 */
+  user-select: none; /* 停用選取效果 */
+}
+
+.path-text {
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+
+.path-item:hover {
+  background: var(--bg-hover);
+}
+
+.path-action {
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 3px;
+  min-width: 65px;
+  text-align: center;
+}
+
+.path-action.action-a { background: var(--success-soft); color: var(--success); }
+.path-action.action-d { background: var(--error-soft); color: var(--error); }
+.path-action.action-m { background: var(--warning-soft); color: var(--warning); }
+.path-action.action-r { background: var(--primary-soft); color: var(--primary); }
+
+.log-detail-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+}
+
+.loading-text {
+  padding: 20px;
+  text-align: center;
+  color: var(--text-muted);
+  font-style: italic;
 }

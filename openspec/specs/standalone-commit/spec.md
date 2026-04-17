@@ -1,8 +1,13 @@
-# standalone-commit Specification
+---
+id: standalone-commit
+---
+# standalone-commit
+
+<!-- [MODIFIED] -->
 
 ## Purpose
 
-TBD - created by archiving change 'add-commit-page'. Update Purpose after archive.
+本規範定義了獨立提交 (Standalone Commit) 介面的核心功能與交互準則，確保開發者能流暢地管理本地變更並進行版本推送。
 
 ## Requirements
 
@@ -71,4 +76,65 @@ code:
   - svn-merge-helper/src/renderer/js/commit-manager.js
   - svn-merge-helper/src/renderer/styles/main.css
   - svn-merge-helper/src/main/svn-bridge.js
+-->
+
+---
+### Requirement: Revert single file change
+The system SHALL provide a mechanism to revert uncommitted changes for a single file in the standalone commit view.
+
+#### Scenario: User reverts a single modified file
+- **WHEN** the user clicks the revert button for a specific file
+- **THEN** the system SHALL display a confirmation dialog
+- **WHEN** the user confirms the revert action
+- **THEN** the system SHALL execute the SVN revert command for that file and refresh the file list
+
+
+<!-- @trace
+source: add-revert-to-commit-page
+updated: 2026-04-17
+code:
+  - svn-merge-helper/src/main/main.js
+  - svn-merge-helper/src/main/svn-bridge.js
+  - svn-merge-helper/src/renderer/js/commit-manager.js
+  - svn-merge-helper/src/renderer/js/log-manager.js
+  - svn-merge-helper/src/renderer/js/modal.js
+<!-- @trace
+source: add-svn-log-view
+updated: 2026-04-17
+files:
+  - svn-merge-helper/src/renderer/js/toast.js
+  - svn-merge-helper/src/renderer/styles/main.css
+  - svn-merge-helper/src/preload/preload.js
+  - svn-merge-helper/src/renderer/index.html
+-->
+
+---
+### Requirement: Revert multiple selected files
+The system SHALL provide a mechanism to revert uncommitted changes for multiple selected files simultaneously in the standalone commit view.
+
+#### Scenario: User reverts multiple selected files
+- **WHEN** the user selects multiple files and clicks the batch revert button
+- **THEN** the system SHALL display a confirmation dialog
+- **WHEN** the user confirms the revert action
+- **THEN** the system SHALL execute the SVN revert command for all selected files and refresh the file list
+
+#### Scenario: User cancels revert action
+- **WHEN** the user initiates a revert action (single or batch)
+- **THEN** the system SHALL display a confirmation dialog
+- **WHEN** the user cancels the confirmation dialog
+- **THEN** the system SHALL NOT execute the SVN revert command and SHALL keep the current file states intact
+
+<!-- @trace
+source: add-revert-to-commit-page
+updated: 2026-04-17
+code:
+  - svn-merge-helper/src/main/main.js
+  - svn-merge-helper/src/main/svn-bridge.js
+  - svn-merge-helper/src/renderer/js/commit-manager.js
+  - svn-merge-helper/src/renderer/js/log-manager.js
+  - svn-merge-helper/src/renderer/js/modal.js
+  - svn-merge-helper/src/renderer/js/toast.js
+  - svn-merge-helper/src/renderer/styles/main.css
+  - svn-merge-helper/src/preload/preload.js
+  - svn-merge-helper/src/renderer/index.html
 -->

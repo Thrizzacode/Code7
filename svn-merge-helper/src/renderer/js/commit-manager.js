@@ -20,6 +20,15 @@ const CommitManager = {
       });
     }
 
+    // Project Log button
+    const btnProjectLog = Utils.$('btn-show-project-log');
+    if (btnProjectLog) {
+      btnProjectLog.addEventListener('click', () => {
+        if (!this.wcPath) return;
+        LogManager.show(this.wcPath);
+      });
+    }
+
     // Unversioned toggle
     const toggleUnversioned = Utils.$('commit-show-unversioned');
     if (toggleUnversioned) {
@@ -54,6 +63,14 @@ const CommitManager = {
     if (btnCommit) {
       btnCommit.addEventListener('click', () => {
         this.executeCommit();
+      });
+    }
+
+    // Batch Revert button
+    const btnBatchRevert = Utils.$('btn-batch-revert');
+    if (btnBatchRevert) {
+      btnBatchRevert.addEventListener('click', () => {
+        this.executeBatchRevert();
       });
     }
     
@@ -144,6 +161,13 @@ const CommitManager = {
 
       let actionBtnHTML = '';
       let actionType = '';
+      let revertBtnHTML = '';
+
+      // Only show revert for versioned items that have modifications or are missing/deleted
+      if (['modified', 'conflicted', 'deleted', 'added', 'missing'].includes(entry.itemStatus)) {
+        revertBtnHTML = '<button class="btn btn-sm btn-action revert-btn" title="還原變更 (Revert)" style="padding: 2px 6px; background: transparent; border: none; cursor: pointer; border-radius: 4px;">↩️</button>';
+      }
+
       if (['modified', 'conflicted', 'deleted'].includes(entry.itemStatus)) {
         actionBtnHTML = '<button class="btn btn-sm btn-action preview-btn" title="比對差異 (Diff) / 支援快點兩下" style="padding: 2px 6px; background: transparent; border: none; cursor: pointer; border-radius: 4px;">🔍</button>';
         actionType = 'diff';
@@ -152,13 +176,19 @@ const CommitManager = {
         actionType = 'open';
       }
 
+      const logBtnHTML = '<button class="btn btn-sm btn-action log-btn" title="查看日誌 (Log)" style="padding: 2px 6px; background: transparent; border: none; cursor: pointer; border-radius: 4px;">📜</button>';
+
       tr.innerHTML = `
         <td style="padding-left: 16px;">
           <input type="checkbox" class="commit-file-checkbox" value="${Utils.escapeHtml(entry.path)}" />
         </td>
         <td><span class="badge ${badgeClass}">${statusLabel}</span></td>
-        <td class="text-truncate" title="${Utils.escapeHtml(entry.path)}">${Utils.escapeHtml(entry.path)}</td>
-        <td style="text-align: center;">${actionBtnHTML}</td>
+        <td class="path-cell" title="${entry.path}">${this._getRelativePath(entry.path)}</td>
+        <td style="text-align: right; padding-right: 16px;">
+          <div style="display: flex; gap: 4px; justify-content: flex-end; align-items: center;">
+            ${actionBtnHTML}${logBtnHTML}${revertBtnHTML}
+          </div>
+        </td>
       `;
 
       const cb = tr.querySelector('.commit-file-checkbox');
@@ -209,6 +239,37 @@ const CommitManager = {
         });
       }
 
+      const logBtn = tr.querySelector('.log-btn');
+      if (logBtn) {
+        logBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          LogManager.show(entry.path);
+        });
+      }
+
+      const revertBtn = tr.querySelector('.revert-btn');
+      if (revertBtn) {
+        revertBtn.addEventListener('click', async (e) => {
+          e.stopPropagation();
+          const relPath = this._getRelativePath(entry.path);
+          const confirmed = await Modal.confirm(
+            '還原確認',
+            `確定要還原此檔案的變更嗎？\n[ ${relPath} ]\n還原後將遺失所有未提交的修改。`,
+            '還原',
+            'btn-danger'
+          );
+          if (confirmed) {
+            const result = await window.svnApi.revert(entry.path);
+            if (result.success) {
+              Toast.success('還原作業已完成', relPath);
+              this.refresh();
+            } else {
+              Utils.showErrorWithCopy('還原失敗', result.error);
+            }
+          }
+        });
+      }
+
       tbody.appendChild(tr);
     });
 
@@ -229,6 +290,69 @@ const CommitManager = {
     
     const msg = Utils.$('standalone-commit-message').value.trim();
     Utils.$('btn-standalone-commit').disabled = (count === 0) || (msg === '');
+    
+    const btnBatchRevert = Utils.$('btn-batch-revert');
+    if (btnBatchRevert) {
+      btnBatchRevert.disabled = (count === 0);
+    }
+  },
+
+  /**
+   * Get relative path from absolute path using wcPath.
+   * @param {string} absPath 
+   * @returns {string}
+   */
+  _getRelativePath(absPath) {
+    if (!this.wcPath || !absPath) return absPath;
+    
+    // Normalize both to forward slashes for comparison
+    const normWc = this.wcPath.replace(/\\/g, '/').replace(/\/$/, '');
+    const normAbs = absPath.replace(/\\/g, '/');
+    
+    // Case-insensitive comparison for Windows paths
+    if (normAbs.toLowerCase().startsWith(normWc.toLowerCase())) {
+      let rel = normAbs.substring(normWc.length);
+      return rel.replace(/^[\\\/]+/, '');
+    }
+    
+    return normAbs;
+  },
+
+  async executeBatchRevert() {
+    const count = this.selectedFiles.size;
+    if (count === 0) return;
+
+    const confirmed = await Modal.confirm(
+      '批次還原確認',
+      `確定要還原這 ${count} 個選取的變更嗎？\n還原後將遺失所有未提交的修改。`,
+      '全部還原',
+      'btn-danger'
+    );
+
+    if (confirmed) {
+      const filesArray = Array.from(this.selectedFiles);
+      
+      Toast.show('warning', '還原中...', '正在執行批次還原...', 0);
+      Utils.$('btn-batch-revert').disabled = true;
+
+      try {
+        const result = await window.svnApi.revert(filesArray);
+        Toast.removeByTitle('還原中...');
+
+        if (result.success) {
+          Toast.success('還原成功', `已還原 ${count} 個檔案`);
+          this.selectedFiles.clear();
+          this.refresh();
+        } else {
+          Utils.showErrorWithCopy('批次還原失敗', result.error);
+          this._updateSelectionSummary();
+        }
+      } catch (err) {
+        Toast.removeByTitle('還原中...');
+        Utils.showErrorWithCopy('還原過程發生未預期的錯誤', { message: err.message || String(err) });
+        this._updateSelectionSummary();
+      }
+    }
   },
 
   async executeCommit() {
@@ -246,10 +370,10 @@ const CommitManager = {
 
     try {
       const result = await window.svnApi.commit(this.wcPath, msg, filesArray);
-      Toast.remove('warning', '提交中...');
+      Toast.removeByTitle('提交中...');
 
       if (result.success) {
-        Toast.success('提交成功', `Revision: ${result.revision || 'N/A'}`);
+        Toast.success('提交作業已完成', `Revision: ${result.revision || 'N/A'}`);
         Utils.$('standalone-commit-message').value = '';
         this.selectedFiles.clear();
         this.refresh();
@@ -258,7 +382,7 @@ const CommitManager = {
         this._updateSelectionSummary();
       }
     } catch (err) {
-      Toast.remove('warning', '提交中...');
+      Toast.removeByTitle('提交中...');
       Utils.showErrorWithCopy('提交過程發生未預期的錯誤', { message: err.message || String(err) });
       this._updateSelectionSummary();
     }

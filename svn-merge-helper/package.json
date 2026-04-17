@@ -1,6 +1,6 @@
 {
   "name": "code7",
-  "version": "1.6.1",
+  "version": "1.7.0",
   "description": "客製化 SVN Merge 輔助桌面工具，簡化 branches → qat → stg 合併流程",
   "main": "src/main/main.js",
   "scripts": {

@@ -9,6 +9,7 @@ contextBridge.exposeInMainWorld('svnApi', {
   merge: (sourceUrl, targetWcPath, revisions) => ipcRenderer.invoke('svn:merge', sourceUrl, targetWcPath, revisions),
   commit: (wcPath, message, filesArray) => ipcRenderer.invoke('svn:commit', wcPath, message, filesArray),
   resolve: (filePath) => ipcRenderer.invoke('svn:resolve', filePath),
+  revert: (targetPath) => ipcRenderer.invoke('svn:revert', targetPath),
   getMergeInfo: (sourceUrl, targetWcPath) => ipcRenderer.invoke('svn:mergeinfo', sourceUrl, targetWcPath),
   update: (wcPath) => ipcRenderer.invoke('svn:update', wcPath),
   ensureLocalPath: (wcPath) => ipcRenderer.invoke('svn:ensure-local-path', wcPath),
@@ -31,7 +32,7 @@ contextBridge.exposeInMainWorld('svnApi', {
 
   // External Tools
   launchMergeTool: (filePath) => ipcRenderer.invoke('tool:launch-merge-tool', filePath),
-  openDiff: (filePath) => ipcRenderer.invoke('tool:open-diff', filePath),
+  openDiff: (filePath, options = {}) => ipcRenderer.invoke('tool:open-diff', filePath, options),
   openFile: (filePath) => ipcRenderer.invoke('tool:open-file', filePath),
 
   // IIS Version Switcher

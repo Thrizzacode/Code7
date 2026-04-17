@@ -1,0 +1,201 @@
+<h2 style="margin-left: 0.0px;">1. 簡介</h2>
+<p>Code7 是一款專為簡化 SVN 合併流程設計的桌面工具。它能自動識別專案路徑，協助開發者快速在 branches、qat 與 stg 三大環境之間進行代碼合併、衝突處理與工作目錄同步。</p>
+<p>✨ v1.7.x 新功能： 新增 SVN Log 歷史版本檢視，並在提交頁面支援 Revert (還原) 變更檔案的功能。</p>
+<h2 style="margin-left: 0.0px;">2. 快速入門：首次執行</h2>
+<p>若您是第一次開啟 Code7，系統會引導您進行初始設定：</p>
+<ol>
+  <li>點擊 「&#55357;&#56514; 匯入工作目錄」 按鈕。</li>
+  <li>選擇存放所有 Fz 專案的 父資料夾（例如：D:\Workspace\Fz_Projects）。</li>
+  <li>App 會自動掃描該目錄下所有符合規則的 SVN Working Copy 並匯入專案清單。</li>
+</ol>
+<h2 style="margin-left: 0.0px;">3. 核心功能：合併版本 (Merge)</h2>
+<h3 style="margin-left: 0.0px;">第一步：選擇專案</h3>
+<p>在頂部導覽列選擇您要作業的專案。選擇後，App 會自動抓取該專案對應的「本地」與「遠端」版本資訊。</p>
+<h3 style="margin-left: 0.0px;">第二步：設定來源與目標</h3>
+<ul>
+  <li>
+    <strong>來源 (Source)</strong>：選擇來源環境（如 branches）及其版本號。
+  </li>
+  <li>
+    <strong>目標 (Target)</strong>：選擇目標環境（如 qat）及其對應版本。
+  </li>
+  <li>
+    <strong>✨ 智能同步 (Smart Sync)</strong>：如果您選擇的版本在本地尚未下載（Working Copy 不存在），路徑下方會出現 「&#55357;&#56549; 同步至本地」
+    按鈕。點擊後系統會自動執行 svn update 並展開目錄（Infinity Depth）。
+  </li>
+</ul>
+<h3 style="margin-left: 0.0px;">第三步：執行合併</h3>
+<ol>
+  <li>
+    <strong>選取 Revisions</strong>：勾選您想要合併的版本紀錄。<ul>
+      <li>
+        <strong>進階過濾</strong>：搜尋框支援 正規表達式 (RegExp)。
+      </li>
+      <li>
+        <strong>重複合併 (Cherry-pick)</strong>：即使已合併，仍可手動勾選重新合併。
+      </li>
+    </ul>
+  </li>
+  <li>點擊下方的 「執行合併 (Merge)」。</li>
+  <li>
+    <strong>後續流程判斷</strong>：<ul>
+      <li>
+        <strong>無衝突 (Success)</strong>：提示成功並自動生成 Commit Message，可直接點擊「提交 (Commit)」完成。
+      </li>
+      <li>
+        <strong>有衝突 (Conflict)</strong>：彈出衝突清單，點擊「使用外部工具解決」開啟 TortoiseMerge。
+      </li>
+    </ul>
+  </li>
+</ol>
+<h2 style="margin-left: 0.0px;">4. 獨立提交功能 (Commit) ✨ NEW</h2>
+<p>如果您需要單獨處理某個環境的檔案提交（非合併流程），請切換至<span> </span>
+  <strong>「提交 (Commit)」</strong>
+  <span> </span>分頁：
+</p>
+<ol>
+  <li>
+    <strong>掃描變更</strong>：選擇環境與版本後，App 會自動顯示工作區所有變更檔案（修改、新增、刪除、衝突）。
+  </li>
+  <li>
+    <strong>檔案預覽</strong>：<strong>「快點兩下」</strong>
+    <span> </span>檔案或是點擊右側圖示，可直接開啟<span> </span>
+    <strong>TortoiseDiff</strong>
+    <span> </span>比對差異，或是直接開啟該檔案。
+  </li>
+  <li>
+    <strong>執行提交</strong>：勾選要提交的檔案，輸入 Commit Message 後點擊下方按鈕即可。
+  </li>
+</ol>
+<h2 style="margin-left: 0.0px;">5. 進階功能：同步更新 (SVN Update)</h2>
+<ul>
+  <li>
+    <strong>更新當前專案</strong>：點擊頂部欄 &#55357;&#56580; 同步更新 &gt; 更新當前專案。
+  </li>
+  <li>
+    <strong>批次更新所有專案</strong>：點擊 &#55357;&#56580; 同步更新 &gt; 更新所有子專案。右上角會顯示實體進度條。
+  </li>
+</ul>
+<h2 style="margin-left: 0.0px;">6. 個人化設定與更新 (Settings)</h2>
+<p>點擊右上角的 ⚙️ 設定 圖示進入：</p>
+<ul>
+  <li>
+    <strong>✨ IIS 版本切換器</strong>：<ul>
+      <li>
+        <strong>一鍵整機切換</strong>：支援自動同步 hosts 檔案與 applicationHost.config 至各分支版本。
+      </li>
+      <li>
+        <strong>團隊共享配置 (v1.6.1)</strong>：新增<span> </span>
+        <strong>「&#55357;&#56580; 恢復預設」</strong>
+        <span> </span>按鈕，點擊後可一鍵恢復為團隊專屬網路路徑 (<code class="whitespace-pre-wrap">\\192.168.70.17...</code>)，支援自動識別最新版本。
+      </li>
+      <li>
+        <strong>排序優化 (v1.6.1)</strong>：版本清單現在會依據編號<span> </span>
+        <strong>倒序排列 (最新版本置頂)</strong>，方便快速選取。
+      </li>
+      <li>
+        <strong>偵測功能</strong>：系統會自動偵測目前 IIS 正在運行的分支版本。
+      </li>
+      <li>
+        <strong>安全性</strong>：套用時會彈出 Windows UAC 授權（黑畫面確認），請點選「是」才能寫入系統路徑。
+      </li>
+    </ul>
+  </li>
+  <li>
+    <strong>佈景主題切換</strong>：提供 PHYSICAM (紅)、TECHNOLOM (藍) 等 5 種風格色彩，並支援<span> </span>
+    <strong>&#55356;&#57113; 深淺色模式</strong>。
+  </li>
+  <li>
+    <strong>專案/工具管理</strong>：可手動排除批次同步專案，或指定特定的 TortoiseMerge 路徑。
+  </li>
+  <li>
+    <strong>App 更新管理</strong>：查看目前的 App 版本並手動檢查更新。
+  </li>
+</ul>
+<h2 style="margin-left: 0.0px;">7. 常見問題 (FAQ)</h2>
+<ul>
+  <li>
+    <strong>Q: 為什麼顯示「載入失敗」？</strong>
+    <ul>
+      <li>A: 請確保已安裝 SVN CLI 工具並加入環境變數。</li>
+    </ul>
+  </li>
+  <li>
+    <strong>Q: IIS 切換時為什麼沒反應？</strong>
+    <ul>
+      <li>A: 請確保您在 UAC 提示時有點擊「是」。若權限不足，系統檔案將無法被覆蓋。</li>
+    </ul>
+  </li>
+</ul>
+<h2 style="margin-left: 0.0px;">8. 版本記錄 (Changelog)</h2>
+<h4 style="margin-left: 0.0px;">v1.7.0 (2026-04-17)</h4>
+<ul>
+  <li>
+    <strong>【新增】SVN Log 檢視</strong>：可直接檢視版本歷史紀錄與異動詳情。
+  </li>
+  <li>
+    <strong>【新增】Revert 支援</strong>：在提交頁面支援取消未提交的檔案變更。
+  </li>
+  <li>
+    <strong>【優化】UI 體驗</strong>：強化 Modal、Toast 等內部共用元件與 Manager 穩定性。
+  </li>
+</ul>
+<h4 style="margin-left: 0.0px;">v1.6.1 (2026-04-14)</h4>
+<ul>
+  <li>
+    <strong>【新增】恢復團隊預設路徑</strong>：一鍵套用團隊專用連結，並支援首選版本自動排序優化。
+  </li>
+  <li>
+    <strong>【優化】選單排序</strong>：IIS 版本清單改為最新版本置頂。
+  </li>
+  <li>
+    <strong>【優化】UI 視覺</strong>：優化 Toast 通知在不同佈景主題下的色彩呈現。
+  </li>
+</ul>
+<h4 style="margin-left: 0.0px;">v1.6.0 (2026-04-14)</h4>
+<ul>
+  <li>
+    <strong>【新增】雙視圖導覽</strong>：新增「合併」與「提交」分頁導覽標籤。
+  </li>
+  <li>
+    <strong>【新增】獨立提交分頁</strong>：支援完整檔案狀態掃描、快點兩下 Diff 預覽與批次提交功能。
+  </li>
+  <li>
+    <strong>【新增】IIS 版本切換器</strong>：整合 SettingFiles 管理，支援一鍵切換 IIS 配置與系統 hosts。
+  </li>
+  <li>
+    <strong>【優化】系統權限處理</strong>：採用 PowerShell 加密指令技術處理 UAC 授權。
+  </li>
+</ul>
+<h4 style="margin-left: 0.0px;">v1.5.0 (2026-04-10)</h4>
+<ul>
+  <li>
+    <strong>【新增】個人化佈景主題 (Theme Switcher)</strong>：提供 5 種色彩主題與明暗模式切換。
+  </li>
+</ul>
+<h4 style="margin-left: 0.0px;">v1.4.0 (2026-04-08)</h4>
+<ul>
+  <li>
+    <strong>【新增】遠端版本列表 (Remote Listing)</strong>：支援從伺服器抓取所有可用分支。
+  </li>
+</ul>
+<h4 style="margin-left: 0.0px;">v1.3.0 (2026-04-08)</h4>
+<ul>
+  <li>
+    <strong>【優化】更新檢查反饋</strong>：新增 Toast 提示訊息。
+  </li>
+</ul>
+<h4 style="margin-left: 0.0px;">v1.2.0 (2026-04-08)</h4>
+<ul>
+  <li>自動更新 (Auto Update) 整合與 CI/CD 自動化建置。</li>
+</ul>
+<h4 style="margin-left: 0.0px;">v1.1.0 (2026-04-08)</h4>
+<ul>
+  <li>【新增】RegExp 正則搜尋與重複合併 (Cherry-pick) 支援。</li>
+</ul>
+<h4 style="margin-left: 0.0px;">v1.0.0 (2026-04-07)</h4>
+<ul>
+  <li>正式發布版本。</li>
+</ul>
+<hr />
+<p>(本文檔由 Code7 開發團隊維護，最後更新日期：2026-04-17)</p>

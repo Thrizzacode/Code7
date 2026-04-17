@@ -78,7 +78,7 @@ const Modal = {
     return new Promise((resolve) => {
       this.show({
         title,
-        bodyHtml: `<p style="color: var(--text-secondary); line-height: 1.6;">${Utils.escapeHtml(message)}</p>`,
+        bodyHtml: `<p style="color: var(--text-secondary); line-height: 1.6; white-space: pre-wrap; word-break: break-all;">${Utils.escapeHtml(message)}</p>`,
         buttons: [
           { text: '取消', className: 'btn-ghost', onClick: () => { this.hide(); resolve(false); } },
           { text: confirmText, className: confirmClass, onClick: () => { this.hide(); resolve(true); } }

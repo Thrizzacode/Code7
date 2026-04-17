@@ -87,6 +87,10 @@ function registerIpcHandlers() {
     return SvnBridge.update(wcPath);
   });
 
+  ipcMain.handle("svn:revert", async (_event, targetPath) => {
+    return SvnBridge.revert(targetPath);
+  });
+
   ipcMain.handle("svn:ensure-local-path", async (_event, wcPath) => {
     return SvnBridge.ensureLocalPath(wcPath);
   });
@@ -256,11 +260,21 @@ function registerIpcHandlers() {
     return SvnBridge.launchExternalTool(toolPath, filePath);
   });
 
-  ipcMain.handle("tool:open-diff", async (_event, filePath) => {
+  ipcMain.handle("tool:open-diff", async (_event, filePath, options = {}) => {
     return new Promise((resolve) => {
       // Execute TortoiseProc's diff command
       const { execFile } = require("child_process");
-      execFile("TortoiseProc.exe", ["/command:diff", `/path:${filePath}`], (error) => {
+      const args = ["/command:diff", `/path:${filePath}`];
+      
+      // If revision is provided, compare with previous one (REV-1 : REV)
+      if (options.revision) {
+        const rev = parseInt(options.revision, 10);
+        if (!isNaN(rev)) {
+          args.push(`/startrev:${rev - 1}`, `/endrev:${rev}`);
+        }
+      }
+
+      execFile("TortoiseProc.exe", args, (error) => {
         if (error) {
           console.error("Failed to open TortoiseProc diff:", error);
           resolve({ success: false, error: error.message });

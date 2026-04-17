@@ -2,8 +2,7 @@
 # See: https://github.com/spectra-app/spectra
 
 # OpenSpec directory path (relative to project root)
-# Changing this requires rebuilding the vector search index.
-# spec_dir: docs/specs
+spec_dir: openspec
 
 # Language for AI-generated artifacts
 locale: tw

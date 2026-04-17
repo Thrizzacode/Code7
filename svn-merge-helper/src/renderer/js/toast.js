@@ -59,5 +59,22 @@ const Toast = {
     setTimeout(() => {
       if (toast.parentNode) toast.parentNode.removeChild(toast);
     }, 200);
+  },
+
+  /**
+   * Remove all toasts with a specific title.
+   * @param {string} title 
+   */
+  removeByTitle(title) {
+    const container = Utils.$('toast-container');
+    if (!container) return;
+    
+    const toasts = container.querySelectorAll('.toast');
+    toasts.forEach(toast => {
+      const titleEl = toast.querySelector('.toast-title');
+      if (titleEl && titleEl.textContent === title) {
+        this._remove(toast);
+      }
+    });
   }
 };

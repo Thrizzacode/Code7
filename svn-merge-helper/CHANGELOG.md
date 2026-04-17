@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.7.0] - 2026-04-17
+
+### Added
+- **SVN Log 檢視**：新增 SVN Log 列表與異動檢視功能，方便查詢歷史紀錄與詳細日誌。
+- **Revert 更新**：在 Commit 分頁中新增 Revert (還原) 功能，允許使用者快速取消尚未提交的工作區變更檔案。
+
+### Changed
+- **UI 強化與架構優化**：優化 Modal 與 Toast 元件，升級 Commit Manager / Log Manager 以支援更細緻的 SVN 操作。
+
 ## [1.6.1] - 2026-04-14
 
 ### Added
