@@ -13,16 +13,40 @@ id: svn-log-history
 
 ### Requirement: Log View Modal
 
-系統應提供一個獨立的彈窗介面，用於顯示特定檔案或路徑的 SVN 歷史紀錄。
+The system SHALL provide a standalone modal interface for displaying SVN log history for a specific file or path.
 
 #### Scenario: View Project Root Logs
-- **WHEN** 使用者從專案主選單或 Commit 頁面點擊「顯示 Log (Show Log)」
-- **THEN** 系統應調用 `svn:log` API 獲取專案根路徑的最近 100 筆紀錄
-- **AND** 系統應顯示包含 Revision、Author、Date 與 Message 的列表。
+- **WHEN** the user clicks "專案歷史" from the Commit page AND a commit version (wcPath) has been selected
+- **THEN** the system SHALL call the `svn:log` API to fetch the latest 100 entries for the project root path
+- **AND** the system SHALL display a list with Revision, Author, Date, and Message
+
+#### Scenario: View Project Root Logs - Version Not Selected
+- **WHEN** the user clicks "專案歷史" from the Commit page AND no commit version (wcPath) has been selected
+- **THEN** the system SHALL display a Toast warning with title "尚未選擇版本", message "請先在上方選擇版本後再查看專案歷史"
+- **AND** the log modal SHALL NOT open
 
 #### Scenario: View Single File Logs
-- **WHEN** 使用者在 Commit 檔案列表點擊單一檔案旁的 `🔍 (Show Log)` 按鈕
-- **THEN** 系統應僅抓取並顯示該特定檔案的歷史紀錄。
+- **WHEN** the user clicks the `🔍 (Show Log)` button next to a single file in the Commit file list
+- **THEN** the system SHALL fetch and display only the history for that specific file
+
+##### Example: version selection guard
+| State | User Action | Expected Behavior |
+|-------|-------------|-------------------|
+| wcPath = "" (not selected) | Click "專案歷史" | Toast warning shown, modal stays closed |
+| wcPath = "D:\repo\branches\feature" | Click "專案歷史" | Log modal opens with project root logs |
+
+
+<!-- @trace
+source: project-history-version-prompt
+updated: 2026-06-02
+code:
+  - svn-merge-helper/src/renderer/js/commit-manager.js
+  - svn-merge-helper/src/main/svn-bridge.js
+  - svn-merge-helper/src/renderer/js/log-manager.js
+  - svn-merge-helper/src/renderer/js/utils.js
+  - svn-merge-helper/confluence.html
+  - svn-merge-helper/src/renderer/index.html
+-->
 
 ---
 ### Requirement: Search and Filtering

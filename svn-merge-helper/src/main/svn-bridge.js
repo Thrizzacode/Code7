@@ -163,6 +163,9 @@ const SvnBridge = {
         args.push('--revision', String(options.revision));
       } else if (options.startRevision && options.endRevision) {
         args.push('--revision', `${options.startRevision}:${options.endRevision}`);
+      } else {
+        // Default to HEAD:1 so local WC BASE revision doesn't hide recent commits
+        args.push('--revision', 'HEAD:1');
       }
 
       // Handle verbose

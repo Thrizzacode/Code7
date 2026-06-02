@@ -125,7 +125,7 @@ const LogManager = {
       tr.innerHTML = `
         <td style="font-family: var(--font-mono); font-weight: 600; color: var(--accent);">${entry.revision}</td>
         <td>${Utils.escapeHtml(entry.author)}</td>
-        <td style="font-size: 0.85em; color: var(--text-secondary);">${entry.date.replace('T', ' ').split('.')[0]}</td>
+        <td style="font-size: 0.85em; color: var(--text-secondary);">${Utils.formatDateTime(entry.date)}</td>
         <td class="text-truncate" title="${Utils.escapeHtml(entry.message)}">${Utils.escapeHtml(entry.message)}</td>
       `;
       tr.addEventListener('click', () => this.selectRevision(entry));
@@ -164,6 +164,10 @@ const LogManager = {
     } else {
       pathList.innerHTML = '<div style="color: var(--danger-color);">無法獲取路徑細節</div>';
     }
+  },
+
+  isOpen() {
+    return !!Utils.$('log-list-body');
   },
 
   _renderPaths(paths, container) {

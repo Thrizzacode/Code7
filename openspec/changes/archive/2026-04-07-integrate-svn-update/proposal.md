@@ -5,7 +5,7 @@
 ## What Changes
 
 - **UI 增強**：在頂部欄（Top Bar）導覽區增加「同步更新」功能按鈕 (🔄)。
-- **單一更新**：提供「更新當前專案」功能，顯示 **Indeterminate 進度條** 提示後台正在執行。
+- **單一更新**：提供「蠟筆取新」功能，顯示 **Indeterminate 進度條** 提示後台正在執行。
 - **批次更新**：支援一鍵更新所有專案。更新清單改為從配置動態抓取，並提供 **實體進度條** 與數值提示（如 `3/11`）。
 - **自定義更新範圍**：在設定頁面的專案管理清單中，為每個專案新增「同步」勾選框 (`isBatchEnabled`)，允許使用者決定執行批次更新時要包含或排除哪些目錄。
 - **IPC 擴展**：註冊 `svn:update` 與 `svn:update-batch` IPC 管道，支援非同步更新與進度回報。
@@ -28,10 +28,10 @@
 
 ## Impact
 
-- **Affected code**: 
-    - `src/main/svn-bridge.js`: 新增 `update` 封裝。
-    - `src/main/main.js`: 註冊 IPC 監聽與批次循回執行。
-    - `src/renderer/index.html`: 進度條 CSS 與同步按鈕 HTML。
-    - `src/renderer/js/app.js`: `SyncController` 實作視覺進度邏輯。
-    - `src/renderer/js/settings.js`: 改進專案列表，支援 `isBatchEnabled` 勾選開關。
+- **Affected code**:
+  - `src/main/svn-bridge.js`: 新增 `update` 封裝。
+  - `src/main/main.js`: 註冊 IPC 監聽與批次循回執行。
+  - `src/renderer/index.html`: 進度條 CSS 與同步按鈕 HTML。
+  - `src/renderer/js/app.js`: `SyncController` 實作視覺進度邏輯。
+  - `src/renderer/js/settings.js`: 改進專案列表，支援 `isBatchEnabled` 勾選開關。
 - **Dependencies**: 需要本機環境已安裝 `svn` CLI 指令。

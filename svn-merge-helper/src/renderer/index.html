@@ -189,8 +189,8 @@
         <div class="dropdown">
           <button id="btn-sync" class="btn btn-icon" title="同步更新">🔄</button>
           <div class="dropdown-menu">
-            <button id="btn-update-current" class="dropdown-item">更新當前專案</button>
-            <button id="btn-update-all" class="dropdown-item">更新所有子專案</button>
+            <button id="btn-update-current" class="dropdown-item">蠟筆取新</button>
+            <button id="btn-update-all" class="dropdown-item">蠟筆取新所有子專案</button>
           </div>
         </div>
         <button id="btn-settings" class="btn btn-icon" title="設定">⚙</button>
@@ -289,10 +289,10 @@
             <thead>
               <tr>
                 <th class="col-check"></th>
-                <th class="col-rev">Revision</th>
-                <th class="col-author">Author</th>
-                <th class="col-date">Date</th>
-                <th class="col-message">Message</th>
+                <th class="col-rev">版本</th>
+                <th class="col-author">作者</th>
+                <th class="col-date">日期</th>
+                <th class="col-message">訊息</th>
               </tr>
             </thead>
             <tbody id="revision-tbody">
@@ -457,7 +457,8 @@
         <!-- IIS Version Switcher (Requirement: User can switch IIS version from Settings) -->
         <div class="settings-section">
           <h3>IIS 版本設定</h3>
-          <div class="form-group" style="margin-bottom: 12px; padding: 10px; background: rgba(255,255,255,0.05); border-radius: 6px;">
+          <div class="form-group"
+            style="margin-bottom: 12px; padding: 10px; background: rgba(255,255,255,0.05); border-radius: 6px;">
             <div style="display: flex; justify-content: space-between; align-items: center;">
               <span style="font-size: 13px; color: var(--text-muted);">當前生效版本：</span>
               <span id="iis-current-version-active" class="badge badge-primary" style="font-size: 14px;">偵測中...</span>
@@ -466,9 +467,11 @@
           <div class="form-group">
             <label for="iis-setting-files-path">SettingFiles 根目錄</label>
             <div style="display: flex; gap: 8px; align-items: center;">
-              <input type="text" id="iis-setting-files-path" class="input" placeholder="選擇 SettingFiles 資料夾路徑..." readonly style="flex: 1;" />
+              <input type="text" id="iis-setting-files-path" class="input" placeholder="選擇 SettingFiles 資料夾路徑..."
+                readonly style="flex: 1;" />
               <button id="btn-pick-setting-files" class="btn btn-sm btn-secondary">📂 瀏覽</button>
-              <button id="btn-reset-iis-setting-files" class="btn btn-sm btn-secondary" title="恢復團隊預設網路路徑">🔄 恢復預設</button>
+              <button id="btn-reset-iis-setting-files" class="btn btn-sm btn-secondary" title="恢復團隊預設網路路徑">🔄
+                恢復預設</button>
             </div>
           </div>
           <div class="form-group">
@@ -478,7 +481,8 @@
             </select>
           </div>
           <button id="btn-switch-iis-version" class="btn btn-primary" disabled>🔄 套用並切換 IIS 版本</button>
-          <p style="margin-top: 8px; font-size: 12px; color: var(--text-muted);">套用時會彈出 UAC 授權視窗（Windows 安全性確認），請點選「是」以完成切換。</p>
+          <p style="margin-top: 8px; font-size: 12px; color: var(--text-muted);">套用時會彈出 UAC 授權視窗（Windows
+            安全性確認），請點選「是」以完成切換。</p>
         </div>
 
         <!-- App Update (Requirement: Manual Update Check) -->

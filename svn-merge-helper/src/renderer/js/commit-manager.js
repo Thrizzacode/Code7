@@ -24,7 +24,10 @@ const CommitManager = {
     const btnProjectLog = Utils.$('btn-show-project-log');
     if (btnProjectLog) {
       btnProjectLog.addEventListener('click', () => {
-        if (!this.wcPath) return;
+        if (!this.wcPath) {
+          Toast.warning('尚未選擇版本', '請先在上方選擇版本後再查看專案歷史');
+          return;
+        }
         LogManager.show(this.wcPath);
       });
     }
@@ -377,6 +380,7 @@ const CommitManager = {
         Utils.$('standalone-commit-message').value = '';
         this.selectedFiles.clear();
         this.refresh();
+        if (LogManager.isOpen()) LogManager.refresh();
       } else {
         Utils.showErrorWithCopy('SVN Commit 失敗', result.error);
         this._updateSelectionSummary();
