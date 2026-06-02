@@ -365,7 +365,30 @@ const CommitManager = {
       Toast.warning('提示', '請輸入 Commit Message');
       return;
     }
-    
+
+    // Check if working copy is up to date before committing
+    try {
+      const [localInfo, headInfo] = await Promise.all([
+        window.svnApi.info(this.wcPath),
+        window.svnApi.info(this.wcPath, { revision: 'HEAD' })
+      ]);
+      if (localInfo.success && headInfo.success) {
+        const localRev = localInfo.info.revision;
+        const headRev = headInfo.info.revision;
+        if (localRev < headRev) {
+          const proceed = await Modal.confirm(
+            '工作目錄版本落後',
+            `本地版本 (r${localRev}) 落後伺服器最新版本 (r${headRev})，提交前建議先執行 Update 以避免衝突。\n\n確定要直接提交嗎？`,
+            '仍要提交',
+            'btn-danger'
+          );
+          if (!proceed) return;
+        }
+      }
+    } catch (_) {
+      // info check failure is non-blocking
+    }
+
     const filesArray = Array.from(this.selectedFiles);
 
     Toast.show('warning', '提交中...', '正在執行 svn commit...', 0);
