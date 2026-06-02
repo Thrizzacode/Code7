@@ -312,6 +312,10 @@ function registerIpcHandlers() {
     return app.getVersion();
   });
 
+  ipcMain.handle("shell:open-external", (_event, url) => {
+    shell.openExternal(url);
+  });
+
   // ─── AI IPC Handlers ──────────────────────────────────────────────────────
 
   ipcMain.handle("ai:generate-commit-message", async (_event, entries) => {

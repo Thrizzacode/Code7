@@ -55,5 +55,8 @@ contextBridge.exposeInMainWorld('svnApi', {
   getVersion: () => ipcRenderer.invoke('update:get-version'),
 
   // AI
-  generateCommitMessage: (entries) => ipcRenderer.invoke('ai:generate-commit-message', entries)
+  generateCommitMessage: (entries) => ipcRenderer.invoke('ai:generate-commit-message', entries),
+
+  // Shell
+  openExternal: (url) => ipcRenderer.invoke('shell:open-external', url)
 });

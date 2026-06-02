@@ -150,6 +150,10 @@ const Settings = {
       }
     });
 
+    Utils.$("groq-get-api-key-link").addEventListener("click", () => {
+      window.svnApi.openExternal("https://console.groq.com/keys");
+    });
+
     Utils.$("btn-save-ai-groq-key").addEventListener("click", async () => {
       this._config.aiGroqApiKey = (
         Utils.$("ai-groq-api-key").value || ""
