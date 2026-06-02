@@ -56,6 +56,7 @@ contextBridge.exposeInMainWorld('svnApi', {
 
   // AI
   generateCommitMessage: (entries) => ipcRenderer.invoke('ai:generate-commit-message', entries),
+  buildMergeMessage: (params) => ipcRenderer.invoke('svn:build-merge-message', params),
 
   // Shell
   openExternal: (url) => ipcRenderer.invoke('shell:open-external', url)

@@ -58,6 +58,29 @@ const MergeExecutor = {
       return;
     }
 
+    // ─── Step 1b: Check if working copy is up to date ───
+    try {
+      const [localInfo, headInfo] = await Promise.all([
+        window.svnApi.info(paths.targetWcPath),
+        window.svnApi.info(paths.targetWcPath, { revision: 'HEAD' })
+      ]);
+      if (localInfo.success && headInfo.success) {
+        const localRev = localInfo.info.revision;
+        const headRev = headInfo.info.revision;
+        if (localRev < headRev) {
+          const proceed = await Modal.confirm(
+            '工作目錄版本落後',
+            `本地版本 (r${localRev}) 落後伺服器最新版本 (r${headRev})，建議先執行 Update 以避免潛在的 commit 失敗。\n\n確定要繼續合併嗎？`,
+            '仍要繼續合併',
+            'btn-danger'
+          );
+          if (!proceed) return;
+        }
+      }
+    } catch (_) {
+      // info check failure is non-blocking
+    }
+
     // ─── Step 2: Execute merge ───
     Toast.show('warning', '合併中...', `正在合併 ${revisions.length} 筆 revision...`, 0);
 
@@ -80,6 +103,7 @@ const MergeExecutor = {
       await this._handleConflicts(conflicts, paths);
     } else {
       Toast.success('合併成功', mergeResult.output || '所有檔案已合併');
+      MergeContext.set(paths.sourceUrl, revisions, `${paths.sourceEnv}/${paths.sourceVersion}`);
       this._promptCommit(paths, revisions);
     }
   },
@@ -145,6 +169,7 @@ const MergeExecutor = {
             { text: '提交 (Commit)', className: 'btn-primary', onClick: () => {
                 Modal.hide();
                 const revisions = RevisionPicker.getSelectedRevisions();
+                MergeContext.set(paths.sourceUrl, revisions, `${paths.sourceEnv}/${paths.sourceVersion}`);
                 this._promptCommit(paths, revisions);
               }
             }
@@ -271,6 +296,28 @@ const MergeExecutor = {
    * Execute the SVN commit.
    */
   async _executeCommit(wcPath, message, sourceUrl) {
+    try {
+      const [localInfo, headInfo] = await Promise.all([
+        window.svnApi.info(wcPath),
+        window.svnApi.info(wcPath, { revision: 'HEAD' })
+      ]);
+      if (localInfo.success && headInfo.success) {
+        const localRev = localInfo.info.revision;
+        const headRev = headInfo.info.revision;
+        if (localRev < headRev) {
+          const proceed = await Modal.confirm(
+            '工作目錄版本落後',
+            `本地版本 (r${localRev}) 落後伺服器最新版本 (r${headRev})，提交前建議先執行 Update 以避免衝突。\n\n確定要直接提交嗎？`,
+            '仍要提交',
+            'btn-danger'
+          );
+          if (!proceed) return;
+        }
+      }
+    } catch (_) {
+      // info check failure is non-blocking
+    }
+
     Toast.show('warning', '提交中...', '正在執行 svn commit...', 0);
 
     const result = await window.svnApi.commit(wcPath, message);

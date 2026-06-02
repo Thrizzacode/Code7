@@ -116,6 +116,13 @@ const CommitManager = {
       }
     }
 
+    // Auto-populate message from pending merge context (once, when textarea is empty)
+    const mergeCtx = window.MergeContext && window.MergeContext.get();
+    if (mergeCtx && !Utils.$('standalone-commit-message').value.trim()) {
+      window.MergeContext.clear();
+      this._applyMergeContext(mergeCtx);
+    }
+
     Utils.$('commit-tbody').innerHTML = '';
     Utils.$('commit-empty-state').style.display = 'none';
     Utils.$('commit-loading-state').style.display = 'flex';
@@ -414,6 +421,7 @@ const CommitManager = {
         Toast.success('提交作業已完成', `Revision: ${result.revision || 'N/A'}`);
         Utils.$('standalone-commit-message').value = '';
         this.selectedFiles.clear();
+        if (window.MergeContext) window.MergeContext.clear();
         this.refresh();
         if (LogManager.isOpen()) LogManager.refresh();
       } else {
@@ -424,6 +432,18 @@ const CommitManager = {
       Toast.removeByTitle('提交中...');
       Utils.showErrorWithCopy('提交過程發生未預期的錯誤', { message: err.message || String(err) });
       this._updateSelectionSummary();
+    }
+  },
+
+  async _applyMergeContext(ctx) {
+    try {
+      const result = await window.svnApi.buildMergeMessage(ctx);
+      if (result.success && result.message) {
+        Utils.$('standalone-commit-message').value = result.message;
+        this._updateSelectionSummary();
+      }
+    } catch (_) {
+      // silent fail — user can type the message manually
     }
   },
 

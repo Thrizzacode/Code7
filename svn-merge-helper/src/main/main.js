@@ -316,6 +316,27 @@ function registerIpcHandlers() {
     shell.openExternal(url);
   });
 
+  // ─── Merge Message IPC Handler ────────────────────────────────────────────
+
+  ipcMain.handle("svn:build-merge-message", async (_event, { sourceUrl, revisions, branchLabel }) => {
+    const result = await SvnBridge.logRevisions(sourceUrl, revisions);
+    if (!result.success) return result;
+
+    const revStr = revisions.slice().sort((a, b) => a - b).join(', ');
+    const lines = [`Merged revision(s) ${revStr} from ${branchLabel}:`];
+    result.entries.forEach(entry => {
+      const msg = (entry.message || '').trimEnd();
+      if (msg) {
+        lines.push(msg);
+        lines.push('.......');
+      }
+    });
+    // Remove trailing separator
+    if (lines[lines.length - 1] === '.......') lines.pop();
+
+    return { success: true, message: lines.join('\n') };
+  });
+
   // ─── AI IPC Handlers ──────────────────────────────────────────────────────
 
   ipcMain.handle("ai:generate-commit-message", async (_event, entries) => {

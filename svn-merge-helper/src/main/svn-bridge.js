@@ -460,6 +460,34 @@ const SvnBridge = {
   },
 
   /**
+   * Get SVN log entries for specific revision numbers.
+   * Fetches the range from min to max revision and filters to the requested set.
+   * @param {string} svnPath - SVN URL or working copy path
+   * @param {number[]} revisions - Exact revision numbers to fetch
+   * @returns {Promise<{success: boolean, entries?: LogEntry[], error?: object}>}
+   */
+  async logRevisions(svnPath, revisions) {
+    if (!revisions || revisions.length === 0) return { success: true, entries: [] };
+
+    const nums = revisions.map(Number);
+    const minRev = Math.min(...nums);
+    const maxRev = Math.max(...nums);
+    const revSet = new Set(nums);
+
+    try {
+      const args = ['log', '--xml', '--revision', `${minRev}:${maxRev}`, svnPath];
+      const stdout = await execSvn(args, { timeout: LOG_TIMEOUT });
+      const allEntries = parseLogXml(stdout);
+      const entries = allEntries
+        .filter(e => revSet.has(Number(e.revision)))
+        .sort((a, b) => Number(a.revision) - Number(b.revision));
+      return { success: true, entries };
+    } catch (err) {
+      return { success: false, error: err };
+    }
+  },
+
+  /**
    * Get SVN diff for specific versioned files.
    * @param {string[]} filePaths - Array of absolute paths to versioned files
    * @returns {Promise<{success: boolean, diff?: string, error?: string}>}

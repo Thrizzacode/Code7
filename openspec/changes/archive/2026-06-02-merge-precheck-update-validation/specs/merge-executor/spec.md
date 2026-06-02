@@ -1,38 +1,5 @@
-# merge-executor Specification
+## MODIFIED Requirements
 
-## Purpose
-
-TBD - created by archiving change 'init-svn-viewer'. Update Purpose after archive.
-
-## Requirements
-
-### Requirement: Execute merge with selected revisions
-
-The system SHALL execute `svn merge` with the selected revisions from the source branch into the target branch's working copy.
-
-The merge command SHALL use the `--revision` flag with specific revision ranges derived from the user's selection (e.g., `svn merge -c 1234,1236,1240 <source_url> <target_wc_path>`).
-
-#### Scenario: Successful merge without conflicts
-
-- **WHEN** the user clicks "Merge" with revisions r1234 and r1236 selected
-- **THEN** the system SHALL execute `svn merge -c 1234,1236 <source_url> <target_wc_path>`
-- **THEN** the system SHALL display a success message with a summary of merged files
-- **THEN** the system SHALL prompt the user: "Merge completed. Commit now?"
-
-#### Scenario: Merge with conflicts detected
-
-- **WHEN** the merge operation completes and `svn status --xml` reports conflicted files
-- **THEN** the system SHALL display a warning with the list of conflicted files
-- **THEN** the system SHALL provide a "Resolve with External Tool" button for each conflicted file
-- **THEN** the system SHALL NOT prompt for commit until all conflicts are resolved
-
-#### Scenario: No revisions selected
-
-- **WHEN** the user clicks "Merge" with no revisions selected
-- **THEN** the system SHALL disable the merge button
-- **THEN** the system SHALL display a tooltip: "Select at least one revision to merge"
-
----
 ### Requirement: Pre-merge working copy validation
 
 Before executing a merge, the system SHALL validate that the target working copy is in a clean state and is up to date with the SVN server.
@@ -69,41 +36,8 @@ Before executing a merge, the system SHALL validate that the target working copy
 | r105           | r105          | No dialog; merge proceeds immediately |
 | r105           | r100          | No dialog (local is not behind); merge proceeds immediately |
 
-
-<!-- @trace
-source: merge-precheck-update-validation
-updated: 2026-06-02
-code:
-  - svn-merge-helper/src/main/svn-bridge.js
-  - svn-merge-helper/test-merge-tool.js
-  - svn-merge-helper/src/main/main.js
-  - svn-merge-helper/src/renderer/js/merge-context.js
-  - svn-merge-helper/src/renderer/js/commit-manager.js
-  - svn-merge-helper/src/renderer/js/merge-executor.js
-  - svn-merge-helper/src/preload/preload.js
-  - svn-merge-helper/src/renderer/index.html
--->
-
 ---
-### Requirement: Conflict resolution via external tool
 
-When conflicts are detected, the system SHALL allow the user to launch an external merge tool (TortoiseMerge) for each conflicted file.
-
-#### Scenario: Launch external merge tool
-
-- **WHEN** the user clicks "Resolve with External Tool" on a conflicted file
-- **THEN** the system SHALL launch the configured merge tool with the conflicted file paths as arguments
-- **THEN** the system SHALL monitor the merge tool process
-- **THEN** when the external tool exits, the system SHALL re-check the file's conflict status
-
-#### Scenario: Mark conflict as resolved
-
-- **WHEN** the external tool exits and the file is no longer in conflict
-- **THEN** the system SHALL execute `svn resolve --accept working <file_path>`
-- **THEN** the system SHALL update the conflict list to remove the resolved file
-- **THEN** if all conflicts are resolved, the system SHALL prompt for commit
-
----
 ### Requirement: Post-merge commit
 
 After a successful merge (or after all conflicts are resolved), the system SHALL offer to commit the changes. Before executing the commit, the system SHALL proactively check whether the working copy is up to date with the SVN server.
@@ -141,16 +75,3 @@ After a successful merge (or after all conflicts are resolved), the system SHALL
 - **THEN** the system SHALL display the error message from SVN
 - **THEN** the system SHALL suggest the user run `svn update` externally and retry
 
-<!-- @trace
-source: merge-precheck-update-validation
-updated: 2026-06-02
-code:
-  - svn-merge-helper/src/main/svn-bridge.js
-  - svn-merge-helper/test-merge-tool.js
-  - svn-merge-helper/src/main/main.js
-  - svn-merge-helper/src/renderer/js/merge-context.js
-  - svn-merge-helper/src/renderer/js/commit-manager.js
-  - svn-merge-helper/src/renderer/js/merge-executor.js
-  - svn-merge-helper/src/preload/preload.js
-  - svn-merge-helper/src/renderer/index.html
--->
