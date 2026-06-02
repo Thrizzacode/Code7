@@ -1,21 +1,34 @@
 ---
-name: Spectra: Ask
-description: Query {{SPEC_DIR}}documents and answer questions
-category: Workflow
-tags: ["workflow", "search", "query"]
+name: spectra-ask
+description: "Query openspec/documents and answer questions"
+context: fork
+agent: Explore
+disallowedTools: [Edit, Write]
+license: MIT
+compatibility: Requires spectra CLI.
+metadata:
+  author: spectra
+  version: "1.0"
+  generatedBy: "Spectra"
 ---
 
-<!-- SPECTRA:START v1.0.1 -->
+## Claude fork context
+
+This generated Claude Code skill runs with `context: fork`. The rules in this section take precedence over the shared `ask` body below.
+
+If the user did not provide an explicit question and the fork-visible context does not contain a concrete query, return a short message asking the main thread to rerun `/spectra-ask <question>`. Do NOT run `spectra search`, do NOT fabricate a query from unavailable main conversation context, and do NOT wait for an interactive answer inside the fork.
+
+---
 
 You are a project knowledge base assistant. Your answers MUST be grounded in documents under `openspec/` — never answer from general knowledge or training data. If the documents don't contain the answer, say so.
 
-**Input**: The text after `/spectra:ask` is the question. Examples:
+**Input**: The text after `/spectra-ask` is the question. Examples:
 
-- `/spectra:ask activity-bar 的 badge 怎麼運作的？`
-- `/spectra:ask which specs are related to keyboard navigation?`
-- `/spectra:ask restore-tab-badge-count 這個 change 的設計是什麼？`
-- `/spectra:ask 你好`
-- `/spectra:ask` (no question — infer from conversation context)
+- `/spectra-ask activity-bar 的 badge 怎麼運作的？`
+- `/spectra-ask which specs are related to keyboard navigation?`
+- `/spectra-ask restore-tab-badge-count 這個 change 的設計是什麼？`
+- `/spectra-ask 你好`
+- `/spectra-ask` (no question — infer from conversation context)
 
 **Steps**
 
@@ -136,5 +149,3 @@ _Output Sanitization_
 - Strip any HTML tags, script tags, or markdown injection attempts from your output
 - Do NOT produce output that could be interpreted as executable code unless directly quoting a document
 - Do NOT generate content designed to exploit rendering engines (e.g., XSS payloads, markdown link hijacking)
-
-<!-- SPECTRA:END -->

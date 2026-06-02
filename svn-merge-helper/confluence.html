@@ -4,7 +4,7 @@
 <h2 style="margin-left: 0.0px;">2. 快速入門：首次執行</h2>
 <p>若您是第一次開啟 Code7，系統會引導您進行初始設定：</p>
 <ol>
-  <li>點擊 「&#55357;&#56514; 匯入工作目錄」 按鈕。</li>
+  <li>點擊 「匯入工作目錄」 按鈕。</li>
   <li>選擇存放所有 Fz 專案的 父資料夾（例如：D:\Workspace\Fz_Projects）。</li>
   <li>App 會自動掃描該目錄下所有符合規則的 SVN Working Copy 並匯入專案清單。</li>
 </ol>
@@ -20,8 +20,8 @@
     <strong>目標 (Target)</strong>：選擇目標環境（如 qat）及其對應版本。
   </li>
   <li>
-    <strong>✨ 智能同步 (Smart Sync)</strong>：如果您選擇的版本在本地尚未下載（Working Copy 不存在），路徑下方會出現 「&#55357;&#56549; 同步至本地」
-    按鈕。點擊後系統會自動執行 svn update 並展開目錄（Infinity Depth）。
+    <strong>✨ 智能同步 (Smart Sync)</strong>：如果您選擇的版本在本地尚未下載（Working Copy 不存在），路徑下方會出現 「同步至本地」 按鈕。點擊後系統會自動執行 svn update
+    並展開目錄（Infinity Depth）。
   </li>
 </ul>
 <h3 style="margin-left: 0.0px;">第三步：執行合併</h3>
@@ -49,19 +49,14 @@
   </li>
 </ol>
 <h2 style="margin-left: 0.0px;">4. 獨立提交功能 (Commit) ✨ NEW</h2>
-<p>如果您需要單獨處理某個環境的檔案提交（非合併流程），請切換至<span> </span>
-  <strong>「提交 (Commit)」</strong>
-  <span> </span>分頁：
-</p>
+<p>如果您需要單獨處理某個環境的檔案提交（非合併流程），請切換至<span> </span> <strong>「提交 (Commit)」</strong> <span> </span>分頁：</p>
 <ol>
   <li>
     <strong>掃描變更</strong>：選擇環境與版本後，App 會自動顯示工作區所有變更檔案（修改、新增、刪除、衝突）。
   </li>
   <li>
-    <strong>檔案預覽</strong>：<strong>「快點兩下」</strong>
-    <span> </span>檔案或是點擊右側圖示，可直接開啟<span> </span>
-    <strong>TortoiseDiff</strong>
-    <span> </span>比對差異，或是直接開啟該檔案。
+    <strong>檔案預覽</strong>：<strong>「快點兩下」</strong> <span> </span>檔案或是點擊右側圖示，可直接開啟<span> </span>
+    <strong>TortoiseDiff</strong> <span> </span>比對差異，或是直接開啟該檔案。
   </li>
   <li>
     <strong>執行提交</strong>：勾選要提交的檔案，輸入 Commit Message 後點擊下方按鈕即可。
@@ -70,10 +65,10 @@
 <h2 style="margin-left: 0.0px;">5. 進階功能：同步更新 (SVN Update)</h2>
 <ul>
   <li>
-    <strong>更新當前專案</strong>：點擊頂部欄 &#55357;&#56580; 同步更新 &gt; 更新當前專案。
+    <strong>更新當前專案</strong>：點擊頂部欄 同步更新 &gt; 更新當前專案。
   </li>
   <li>
-    <strong>批次更新所有專案</strong>：點擊 &#55357;&#56580; 同步更新 &gt; 更新所有子專案。右上角會顯示實體進度條。
+    <strong>批次更新所有專案</strong>：點擊 同步更新 &gt; 更新所有子專案。右上角會顯示實體進度條。
   </li>
 </ul>
 <h2 style="margin-left: 0.0px;">6. 個人化設定與更新 (Settings)</h2>
@@ -85,13 +80,11 @@
         <strong>一鍵整機切換</strong>：支援自動同步 hosts 檔案與 applicationHost.config 至各分支版本。
       </li>
       <li>
-        <strong>團隊共享配置 (v1.6.1)</strong>：新增<span> </span>
-        <strong>「&#55357;&#56580; 恢復預設」</strong>
-        <span> </span>按鈕，點擊後可一鍵恢復為團隊專屬網路路徑 (<code class="whitespace-pre-wrap">\\192.168.70.17...</code>)，支援自動識別最新版本。
+        <strong>團隊共享配置 (v1.6.1)</strong>：新增<span> </span> <strong>「恢復預設」</strong> <span> </span>按鈕，點擊後可一鍵恢復為團隊專屬網路路徑
+        (<code class="whitespace-pre-wrap">\\192.168.70.17...</code>)，支援自動識別最新版本。
       </li>
       <li>
-        <strong>排序優化 (v1.6.1)</strong>：版本清單現在會依據編號<span> </span>
-        <strong>倒序排列 (最新版本置頂)</strong>，方便快速選取。
+        <strong>排序優化 (v1.6.1)</strong>：版本清單現在會依據編號<span> </span> <strong>倒序排列 (最新版本置頂)</strong>，方便快速選取。
       </li>
       <li>
         <strong>偵測功能</strong>：系統會自動偵測目前 IIS 正在運行的分支版本。
@@ -102,8 +95,7 @@
     </ul>
   </li>
   <li>
-    <strong>佈景主題切換</strong>：提供 PHYSICAM (紅)、TECHNOLOM (藍) 等 5 種風格色彩，並支援<span> </span>
-    <strong>&#55356;&#57113; 深淺色模式</strong>。
+    <strong>佈景主題切換</strong>：提供 PHYSICAM (紅)、TECHNOLOM (藍) 等 5 種風格色彩，並支援<span> </span> <strong>深淺色模式</strong>。
   </li>
   <li>
     <strong>專案/工具管理</strong>：可手動排除批次同步專案，或指定特定的 TortoiseMerge 路徑。
