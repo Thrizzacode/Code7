@@ -1,6 +1,6 @@
-<h2 style="margin-left: 0.0px;">1. 簡介</h2>
+﻿<h2 style="margin-left: 0.0px;">1. 簡介</h2>
 <p>Code7 是一款專為簡化 SVN 合併流程設計的桌面工具。它能自動識別專案路徑，協助開發者快速在 branches、qat 與 stg 三大環境之間進行代碼合併、衝突處理與工作目錄同步。</p>
-<p>✨ v1.8.x 新功能： SVN Log 改為直接從伺服器拉取最新紀錄，並新增版本狀態列顯示本機與伺服器的版本差距，以及 NEW 標記提示尚未 update 的 commit。</p>
+<p>✨ v1.9.x 新功能： AI 自動生成 Commit Message（支援 Groq / Gemini）、合併成功後自動帶入 Merged revision 訊息、合併與提交前版本落後警告，以及 Revision Picker 彈性全選模式。</p>
 <h2 style="margin-left: 0.0px;">2. 快速入門：首次執行</h2>
 <p>若您是第一次開啟 Code7，系統會引導您進行初始設定：</p>
 <ol>
@@ -36,11 +36,11 @@
       </li>
     </ul>
   </li>
-  <li>點擊下方的 「執行合併 (Merge)」。</li>
+  <li>點擊下方的 「執行合併 (Merge)」。系統會先檢查本地版本是否落後伺服器 HEAD，若落後會要求確認再繼續。</li>
   <li>
     <strong>後續流程判斷</strong>：<ul>
       <li>
-        <strong>無衝突 (Success)</strong>：提示成功並自動生成 Commit Message，可直接點擊「提交 (Commit)」完成。
+        <strong>無衝突 (Success)</strong>：提示成功，並自動從 SVN Log 組合 <code>Merged revision(s) ... from ...</code> 格式的 Commit Message 帶入提交欄位，可直接點擊「提交 (Commit)」完成。
       </li>
       <li>
         <strong>有衝突 (Conflict)</strong>：彈出衝突清單，點擊「使用外部工具解決」開啟 TortoiseMerge。
@@ -48,7 +48,7 @@
     </ul>
   </li>
 </ol>
-<h2 style="margin-left: 0.0px;">4. 獨立提交功能 (Commit) ✨ NEW</h2>
+<h2 style="margin-left: 0.0px;">4. 獨立提交功能 (Commit)</h2>
 <p>如果您需要單獨處理某個環境的檔案提交（非合併流程），請切換至<span> </span> <strong>「提交 (Commit)」</strong> <span> </span>分頁：</p>
 <ol>
   <li>
@@ -59,7 +59,10 @@
     <strong>TortoiseDiff</strong> <span> </span>比對差異，或是直接開啟該檔案。
   </li>
   <li>
-    <strong>執行提交</strong>：勾選要提交的檔案，輸入 Commit Message 後點擊下方按鈕即可。
+    <strong>✨ AI 生成訊息</strong>：勾選要提交的檔案後，點擊「✨ AI 生成」按鈕，系統會自動對選取的檔案執行 SVN diff 並呼叫 AI 生成符合 Conventional Commits 規範的提交訊息（需先在設定中配置 API Key）。
+  </li>
+  <li>
+    <strong>執行提交</strong>：輸入或確認 Commit Message 後，系統會先檢查本地版本是否落後伺服器 HEAD，若落後會要求確認再提交。
   </li>
 </ol>
 <h2 style="margin-left: 0.0px;">5. 進階功能：同步更新 (SVN Update)</h2>
@@ -95,6 +98,14 @@
     </ul>
   </li>
   <li>
+    <strong>✨ AI 訊息生成</strong>：
+    <ul>
+      <li><strong>AI 提供者選擇</strong>：支援 Groq（預設）與 Google Gemini 兩種提供者。</li>
+      <li><strong>API Key 管理</strong>：分別輸入各提供者的 API Key；切換時互斥顯示對應欄位。</li>
+      <li><strong>自訂提示詞</strong>：可修改 AI 提示詞模板，並提供「恢復預設提示詞」按鈕還原為 Conventional Commits 規範格式。</li>
+    </ul>
+  </li>
+  <li>
     <strong>佈景主題切換</strong>：提供 PHYSICAM (紅)、TECHNOLOM (藍) 等 5 種風格色彩，並支援<span> </span> <strong>深淺色模式</strong>。
   </li>
   <li>
@@ -120,6 +131,24 @@
   </li>
 </ul>
 <h2 style="margin-left: 0.0px;">8. 版本記錄 (Changelog)</h2>
+<h4 style="margin-left: 0.0px;">v1.9.0 (2026-06-02)</h4>
+<ul>
+  <li>
+    <strong>【新增】AI Commit Message 生成</strong>：提交頁面新增「✨ AI 生成」按鈕，支援 Groq（預設）與 Google Gemini 兩種 AI 提供者，根據選取檔案的 SVN diff 自動生成 Conventional Commits 格式訊息。
+  </li>
+  <li>
+    <strong>【新增】合併訊息自動帶入</strong>：Merge 成功後切換至提交頁面，系統自動從 SVN Log 組合 <code>Merged revision(s) ... from ...</code> 訊息並填入欄位。
+  </li>
+  <li>
+    <strong>【新增】合併前 / 提交前版本落後警告</strong>：執行合併或提交前自動比對本地版本與 HEAD，落後時顯示確認對話框，失敗時靜默略過不阻塞流程。
+  </li>
+  <li>
+    <strong>【新增】Revision Picker 全選模式下拉選單</strong>：可彈性選擇「全選可合併」或「全選所有」策略。
+  </li>
+  <li>
+    <strong>【優化】Settings AI 訊息生成區塊</strong>：新增 AI 提供者切換、API Key 管理與自訂提示詞設定。
+  </li>
+</ul>
 <h4 style="margin-left: 0.0px;">v1.8.0 (2026-06-02)</h4>
 <ul>
   <li>

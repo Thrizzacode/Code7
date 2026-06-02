@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.9.0] - 2026-06-02
+
+### Added
+- **AI Commit Message 生成**：提交頁面新增「✨ AI 生成」按鈕，根據選取檔案的 SVN diff 自動生成符合 Conventional Commits 規範的提交訊息（支援 Groq 與 Google Gemini 兩種 AI 提供者，預設 Groq）。
+- **合併訊息自動帶入**：執行 Merge 成功後切換至提交頁面時，系統會自動從 SVN Log 組合 `Merged revision(s) ... from ...` 格式的 commit message 並填入欄位。
+- **Revision Picker 全選模式下拉選單**：新增靈活的全選模式選項，可選擇「全選可合併」或「全選所有」等不同策略。
+- **合併前版本落後警告**：執行合併前，若本地 Working Copy 版本落後於伺服器 HEAD，系統會顯示確認對話框要求使用者確認後才繼續。
+- **提交前版本落後警告**：在合併後提交與獨立提交頁面提交前，同樣會檢查版本落後並要求確認。
+
+### Changed
+- **Settings 新增 AI 訊息生成區塊**：可設定 AI 提供者（Groq / Gemini）、API Key 與自訂提示詞，並提供「恢復預設提示詞」功能。
+- **Settings 區塊順序調整**：依使用頻率重新排列設定區塊，AI 相關設定移至顯著位置。
+
 ## [1.8.0] - 2026-06-02
 
 ### Added
