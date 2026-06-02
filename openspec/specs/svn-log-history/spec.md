@@ -24,14 +24,46 @@ id: svn-log-history
 - **WHEN** 使用者在 Commit 檔案列表點擊單一檔案旁的 `🔍 (Show Log)` 按鈕
 - **THEN** 系統應僅抓取並顯示該特定檔案的歷史紀錄。
 
+---
 ### Requirement: Search and Filtering
 
-Log 查看介面應提供本地過濾能力。
+The log view interface SHALL provide local filtering with regular expression support.
 
-#### Scenario: Filter by keywords
-- **WHEN** 使用者在搜尋框輸入作者名稱、版本號或訊息關鍵字
-- **THEN** 系統應即時過濾目前已載入的 Log 列表，僅顯示符合條件的項目。
+#### Scenario: Filter by keywords (plain text)
+- **WHEN** the user types an author name, revision number, or message keyword in the search box
+- **THEN** the system SHALL immediately filter the currently loaded log list and display only matching entries
 
+#### Scenario: Filter by regular expression
+- **WHEN** the user types a valid regular expression in the search box
+- **THEN** the system SHALL apply the regex (case-insensitive) against the revision number, author, and message fields
+- **AND** only matching entries SHALL be displayed
+
+##### Example: regex patterns
+| Input | Expected Behavior |
+|-------|------------------|
+| `^123` | Shows entries where revision starts with "123" |
+| `john\|jane` | Shows entries authored by john or jane |
+| `fix.*bug` | Shows entries whose message contains "fix" followed by "bug" |
+| `` | Shows all entries (empty input) |
+
+#### Scenario: Invalid regular expression fallback
+- **WHEN** the user types an invalid regular expression (e.g., `(unclosed`)
+- **THEN** the system SHALL display a Toast error: title "語法異常", message "不合法的正規表達式，已退回純文字搜尋。"
+- **AND** the system SHALL fall back to plain text substring matching
+- **AND** the Toast SHALL appear only once per invalid input sequence (not on every keystroke)
+
+
+<!-- @trace
+source: regex-search-shared-filter
+updated: 2026-06-02
+code:
+  - svn-merge-helper/src/renderer/js/utils.js
+  - svn-merge-helper/src/renderer/js/log-manager.js
+  - svn-merge-helper/src/renderer/js/revision-picker.js
+  - .spectra.yaml
+-->
+
+---
 ### Requirement: Detailed Revision Info (Lazy Loading)
 
 為了效能考量，系統應按需載入受影響路徑。
@@ -41,6 +73,7 @@ Log 查看介面應提供本地過濾能力。
 - **THEN** 系統應發送包含 `-v` 參數的請求獲取該版本的詳細資訊
 - **AND** 系統應在 Modal 的詳細資訊區域顯示完整的提交訊息 (Commit Message) 與受影響的路徑清單。
 
+---
 ### Requirement: Review Changes (Log Diff)
 
 系統應允許使用者快速對比版本間的代碼差異。
@@ -50,6 +83,7 @@ Log 查看介面應提供本地過濾能力。
 - **THEN** 系統應拼接該檔案的完整儲存庫 URL
 - **AND** 系統應啟動外部 Diff 工具，對比該版本 (REV) 與前一版本 (REV-1) 的差異。
 
+---
 ### Requirement: Layout and Interaction
 
 #### Scenario: Balanced Vertical Layout
