@@ -1,3 +1,5 @@
+let _filterByRegexToastShown = false;
+
 /**
  * Utility functions shared across renderer modules.
  */
@@ -76,6 +78,43 @@ const Utils = {
     } catch {
       return false;
     }
+  },
+
+  /**
+   * Filter an array of entries by text or regex against specified fields.
+   * Falls back to plain-text substring match when the regex is invalid,
+   * showing a Toast error once per invalid input sequence.
+   * @param {Object[]} entries
+   * @param {string} filterText
+   * @param {string[]} fields - field names to search on each entry
+   * @returns {Object[]}
+   */
+  filterByRegex(entries, filterText, fields) {
+    if (!filterText) {
+      _filterByRegexToastShown = false;
+      return entries;
+    }
+
+    let searchRegex = null;
+    try {
+      searchRegex = new RegExp(filterText, 'i');
+      _filterByRegexToastShown = false;
+    } catch (e) {
+      if (!_filterByRegexToastShown) {
+        Toast.error('語法異常', '不合法的正規表達式，已退回純文字搜尋。');
+        _filterByRegexToastShown = true;
+      }
+    }
+
+    const lowerFilter = filterText.toLowerCase();
+
+    return entries.filter(entry => {
+      if (searchRegex) {
+        return fields.some(field => searchRegex.test(String(entry[field] || '')));
+      } else {
+        return fields.some(field => String(entry[field] || '').toLowerCase().includes(lowerFilter));
+      }
+    });
   },
 
   /**

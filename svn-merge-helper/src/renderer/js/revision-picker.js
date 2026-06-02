@@ -216,38 +216,7 @@ const RevisionPicker = {
   },
 
   _getVisibleRevisions() {
-    if (!this._filterText) {
-      this._invalidRegexToastShown = false;
-      return this._allRevisions;
-    }
-
-    let searchRegex = null;
-    try {
-      searchRegex = new RegExp(this._filterText, 'i');
-      this._invalidRegexToastShown = false;
-    } catch (e) {
-      searchRegex = null;
-      if (!this._invalidRegexToastShown) {
-        Toast.error('語法異常', '不合法的正規表達式，已退回純文字搜尋。');
-        this._invalidRegexToastShown = true;
-      }
-    }
-
-    const lowerFilter = this._filterText.toLowerCase();
-
-    return this._allRevisions.filter(entry => {
-      const revStr = String(entry.revision);
-      const author = entry.author || '';
-      const msg = entry.message || '';
-      
-      if (searchRegex) {
-        return searchRegex.test(revStr) || searchRegex.test(author) || searchRegex.test(msg);
-      } else {
-        return revStr.includes(lowerFilter) ||
-               author.toLowerCase().includes(lowerFilter) ||
-               msg.toLowerCase().includes(lowerFilter);
-      }
-    });
+    return Utils.filterByRegex(this._allRevisions, this._filterText, ['revision', 'author', 'message']);
   },
 
   _getUnmergedVisibleRevisions() {

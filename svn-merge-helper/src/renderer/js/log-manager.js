@@ -107,16 +107,7 @@ const LogManager = {
   },
 
   filter(keyword) {
-    if (!keyword) {
-      this._filteredEntries = [...this._logEntries];
-    } else {
-      const kw = keyword.toLowerCase();
-      this._filteredEntries = this._logEntries.filter(entry => 
-        entry.revision.toString().includes(kw) ||
-        entry.author.toLowerCase().includes(kw) ||
-        entry.message.toLowerCase().includes(kw)
-      );
-    }
+    this._filteredEntries = Utils.filterByRegex(this._logEntries, keyword, ['revision', 'author', 'message']);
     this._renderList();
   },
 
