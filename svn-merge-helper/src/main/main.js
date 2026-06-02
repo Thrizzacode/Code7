@@ -45,6 +45,7 @@ function createWindow() {
 function registerIpcHandlers() {
   const SvnBridge = require("./svn-bridge");
   const ConfigManager = require("./config-manager");
+  const AiService = require("./ai-service");
 
   // ─── SVN Bridge IPC Handlers ───────────────────────────────────────
 
@@ -309,6 +310,26 @@ function registerIpcHandlers() {
 
   ipcMain.handle("update:get-version", () => {
     return app.getVersion();
+  });
+
+  // ─── AI IPC Handlers ──────────────────────────────────────────────────────
+
+  ipcMain.handle("ai:generate-commit-message", async (_event, entries) => {
+    const config = ConfigManager.load();
+    const provider = config.aiProvider || 'gemini';
+    const apiKey = provider === 'groq'
+      ? (config.aiGroqApiKey || '')
+      : (config.aiApiKey || '');
+    const promptTemplate = config.aiCommitPrompt || ConfigManager.DEFAULT_COMMIT_PROMPT;
+
+    const versionedPaths = (entries || [])
+      .filter((e) => e.itemStatus !== 'unversioned')
+      .map((e) => e.path);
+
+    const diffResult = await SvnBridge.diff(versionedPaths);
+    const diffText = diffResult.success ? diffResult.diff : '';
+
+    return AiService.generateCommitMessage(provider, apiKey, promptTemplate, entries || [], diffText);
   });
 }
 

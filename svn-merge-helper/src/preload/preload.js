@@ -52,5 +52,8 @@ contextBridge.exposeInMainWorld('svnApi', {
     ipcRenderer.removeAllListeners('update:progress');
     ipcRenderer.on('update:progress', (_event, data) => callback(data));
   },
-  getVersion: () => ipcRenderer.invoke('update:get-version')
+  getVersion: () => ipcRenderer.invoke('update:get-version'),
+
+  // AI
+  generateCommitMessage: (entries) => ipcRenderer.invoke('ai:generate-commit-message', entries)
 });

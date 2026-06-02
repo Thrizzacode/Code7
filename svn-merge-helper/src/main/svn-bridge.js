@@ -457,6 +457,28 @@ const SvnBridge = {
     } catch (err) {
       return { success: false, error: err };
     }
+  },
+
+  /**
+   * Get SVN diff for specific versioned files.
+   * @param {string[]} filePaths - Array of absolute paths to versioned files
+   * @returns {Promise<{success: boolean, diff?: string, error?: string}>}
+   */
+  async diff(filePaths) {
+    if (filePaths.length === 0) {
+      return { success: true, diff: '' };
+    }
+
+    try {
+      const stdout = await execSvn(['diff', ...filePaths]);
+      const DIFF_LIMIT = 8000;
+      const diff = stdout.length > DIFF_LIMIT
+        ? stdout.slice(0, DIFF_LIMIT) + '\n[... diff 已截斷，僅顯示前 8000 字元 ...]'
+        : stdout;
+      return { success: true, diff };
+    } catch (err) {
+      return { success: false, error: err.message || String(err) };
+    }
   }
 };
 

@@ -84,6 +84,13 @@ const CommitManager = {
         this._updateSelectionSummary();
       });
     }
+
+    const btnAiGenerate = Utils.$('btn-ai-generate');
+    if (btnAiGenerate) {
+      btnAiGenerate.addEventListener('click', () => {
+        this.generateMessageWithAI();
+      });
+    }
   },
 
   /**
@@ -298,6 +305,11 @@ const CommitManager = {
     if (btnBatchRevert) {
       btnBatchRevert.disabled = (count === 0);
     }
+
+    const btnAiGenerate = Utils.$('btn-ai-generate');
+    if (btnAiGenerate) {
+      btnAiGenerate.disabled = (count === 0);
+    }
   },
 
   /**
@@ -412,6 +424,46 @@ const CommitManager = {
       Toast.removeByTitle('提交中...');
       Utils.showErrorWithCopy('提交過程發生未預期的錯誤', { message: err.message || String(err) });
       this._updateSelectionSummary();
+    }
+  },
+
+  async generateMessageWithAI() {
+    if (this.selectedFiles.size === 0) return;
+
+    const entries = this.currentStatusEntries
+      .filter(e => this.selectedFiles.has(e.path))
+      .map(e => ({ path: e.path, itemStatus: e.itemStatus }));
+
+    const btnAiGenerate = Utils.$('btn-ai-generate');
+    const originalText = '✨ AI 生成';
+    if (btnAiGenerate) {
+      btnAiGenerate.disabled = true;
+      btnAiGenerate.textContent = '生成中...';
+    }
+
+    try {
+      const result = await window.svnApi.generateCommitMessage(entries);
+
+      if (result.success) {
+        Utils.$('standalone-commit-message').value = result.message;
+        this._updateSelectionSummary();
+      } else {
+        if (result.error === 'API_KEY_MISSING') {
+          Toast.warning('尚未設定 API Key', '請至設定頁面填入 Gemini API Key');
+        } else if (result.error === 'EMPTY_RESPONSE') {
+          Toast.warning('AI 未回傳內容', '請嘗試調整提示詞後重試');
+        } else {
+          Toast.error('AI 生成失敗', result.error || '未知錯誤');
+        }
+      }
+    } catch (err) {
+      Toast.error('AI 生成失敗', err.message || String(err));
+    } finally {
+      if (btnAiGenerate) {
+        btnAiGenerate.textContent = originalText;
+        // Re-enable state is managed by _updateSelectionSummary
+        this._updateSelectionSummary();
+      }
     }
   }
 };

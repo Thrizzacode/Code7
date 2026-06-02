@@ -1,15 +1,34 @@
-const fs = require('fs');
-const path = require('path');
-const { app } = require('electron');
-const { execFile } = require('child_process');
+const fs = require("fs");
+const path = require("path");
+const { app } = require("electron");
+const { execFile } = require("child_process");
 
-const CONFIG_DIR_NAME = 'svn-merge-helper';
-const CONFIG_FILE_NAME = 'config.json';
+const CONFIG_DIR_NAME = "svn-merge-helper";
+const CONFIG_FILE_NAME = "config.json";
+
+const DEFAULT_COMMIT_PROMPT = `你是一個 SVN commit message 生成助手，嚴格遵守 Conventional Commits 規範。
+
+格式：<type>: <subject>
+
+type 規則（只能選一個）：
+- feat：新功能
+- fix：修復 bug
+- refactor：重構（不新增功能、不修 bug）
+- style：格式調整（不影響邏輯）
+- chore：建置、設定、依賴更新
+- docs：文件變更
+- test：測試相關
+- perf：效能優化
+
+規則：
+- subject 使用繁體中文，動詞開頭，不加句號
+- subject 不超過 50 字
+- 只輸出 commit message 本身，不要加任何說明或 markdown 格式`;
 
 const DEFAULT_PATH_TEMPLATES = {
-  branches: 'branches/{version}',
-  qat: 'trunk/05-Code-{version}',
-  stg: 'trunk/05-Code-Stage-{version}'
+  branches: "branches/{version}",
+  qat: "trunk/05-Code-{version}",
+  stg: "trunk/05-Code-Stage-{version}",
 };
 
 /**
@@ -18,9 +37,11 @@ const DEFAULT_PATH_TEMPLATES = {
  */
 function getConfigDir() {
   try {
-    return app.getPath('userData');
+    return app.getPath("userData");
   } catch {
-    const appData = process.env.APPDATA || path.join(require('os').homedir(), 'AppData', 'Roaming');
+    const appData =
+      process.env.APPDATA ||
+      path.join(require("os").homedir(), "AppData", "Roaming");
     return path.join(appData, CONFIG_DIR_NAME);
   }
 }
@@ -35,17 +56,21 @@ function getConfigPath() {
 function createDefaultConfig() {
   return {
     projects: [],
-    mergeToolPath: '',
+    mergeToolPath: "",
     defaultPathTemplates: { ...DEFAULT_PATH_TEMPLATES },
-    theme: 'physicam',
-    mode: 'dark',
-    iisSettingFilesPath: '\\\\192.168.70.17\\0-临时文件\\Code7\\SettingFiles'
+    theme: "physicam",
+    mode: "dark",
+    iisSettingFilesPath: "\\\\192.168.70.17\\0-临时文件\\Code7\\SettingFiles",
+    aiApiKey: "",
+    aiGroqApiKey: "",
+    aiProvider: "groq",
+    aiCommitPrompt: DEFAULT_COMMIT_PROMPT,
   };
 }
 
 // Lazy-require to avoid circular deps (SvnBridge also requires electron, which is fine in main)
 function getSvnBridge() {
-  return require('./svn-bridge');
+  return require("./svn-bridge");
 }
 
 /**
@@ -56,13 +81,13 @@ function getSvnBridge() {
  * @returns {string[]} Sorted list of version-like branch names
  */
 function readProjectVersions(wcRoot) {
-  const branchesDir = path.join(wcRoot, 'branches');
+  const branchesDir = path.join(wcRoot, "branches");
   try {
     if (!fs.existsSync(branchesDir)) return [];
     const entries = fs.readdirSync(branchesDir, { withFileTypes: true });
     return entries
-      .filter(e => e.isDirectory() && !e.name.startsWith('.'))
-      .map(e => e.name)
+      .filter((e) => e.isDirectory() && !e.name.startsWith("."))
+      .map((e) => e.name)
       .sort();
   } catch {
     return [];
@@ -80,16 +105,27 @@ const ConfigManager = {
       if (!fs.existsSync(configPath)) {
         return createDefaultConfig();
       }
-      const raw = fs.readFileSync(configPath, 'utf8');
+      const raw = fs.readFileSync(configPath, "utf8");
       const config = JSON.parse(raw);
       // Ensure all required fields exist
       return {
         projects: config.projects || [],
-        mergeToolPath: config.mergeToolPath || '',
-        defaultPathTemplates: config.defaultPathTemplates || { ...DEFAULT_PATH_TEMPLATES },
-        theme: config.theme || 'physicam',
-        mode: config.mode || 'dark',
-        iisSettingFilesPath: config.iisSettingFilesPath || '\\\\192.168.70.17\\0-临时文件\\Code7\\SettingFiles'
+        mergeToolPath: config.mergeToolPath || "",
+        defaultPathTemplates: config.defaultPathTemplates || {
+          ...DEFAULT_PATH_TEMPLATES,
+        },
+        theme: config.theme || "physicam",
+        mode: config.mode || "dark",
+        iisSettingFilesPath:
+          config.iisSettingFilesPath ||
+          "\\\\192.168.70.17\\0-临时文件\\Code7\\SettingFiles",
+        aiApiKey: config.aiApiKey || "",
+        aiGroqApiKey: config.aiGroqApiKey || "",
+        aiProvider: config.aiProvider || "groq",
+        aiCommitPrompt:
+          config.aiCommitPrompt !== undefined
+            ? config.aiCommitPrompt
+            : DEFAULT_COMMIT_PROMPT,
       };
     } catch {
       return createDefaultConfig();
@@ -108,7 +144,7 @@ const ConfigManager = {
       if (!fs.existsSync(dir)) {
         fs.mkdirSync(dir, { recursive: true });
       }
-      fs.writeFileSync(configPath, JSON.stringify(config, null, 2), 'utf8');
+      fs.writeFileSync(configPath, JSON.stringify(config, null, 2), "utf8");
       return { success: true };
     } catch (err) {
       return { success: false, error: err.message };
@@ -122,16 +158,16 @@ const ConfigManager = {
    */
   validatePath(dirPath) {
     try {
-      if (!dirPath || dirPath.trim() === '') {
-        return { valid: false, error: 'Path is empty' };
+      if (!dirPath || dirPath.trim() === "") {
+        return { valid: false, error: "Path is empty" };
       }
       const stat = fs.statSync(dirPath);
       if (!stat.isDirectory()) {
-        return { valid: false, error: 'Path is not a directory' };
+        return { valid: false, error: "Path is not a directory" };
       }
       return { valid: true };
     } catch {
-      return { valid: false, error: 'Path does not exist' };
+      return { valid: false, error: "Path does not exist" };
     }
   },
 
@@ -143,24 +179,29 @@ const ConfigManager = {
   async detectMergeTool() {
     // Try common registry paths via command line
     const regPaths = [
-      'HKLM\\SOFTWARE\\TortoiseSVN',
-      'HKLM\\SOFTWARE\\WOW6432Node\\TortoiseSVN',
-      'HKCU\\SOFTWARE\\TortoiseSVN'
+      "HKLM\\SOFTWARE\\TortoiseSVN",
+      "HKLM\\SOFTWARE\\WOW6432Node\\TortoiseSVN",
+      "HKCU\\SOFTWARE\\TortoiseSVN",
     ];
 
     for (const regPath of regPaths) {
       try {
         const result = await new Promise((resolve, reject) => {
-          execFile('reg', ['query', regPath, '/v', 'Directory', '/reg:64'], { timeout: 5000 }, (err, stdout) => {
-            if (err) return reject(err);
-            resolve(stdout);
-          });
+          execFile(
+            "reg",
+            ["query", regPath, "/v", "Directory", "/reg:64"],
+            { timeout: 5000 },
+            (err, stdout) => {
+              if (err) return reject(err);
+              resolve(stdout);
+            },
+          );
         });
 
         const match = result.match(/Directory\s+REG_SZ\s+(.+)/i);
         if (match) {
           const tortoiseDir = match[1].trim();
-          const mergePath = path.join(tortoiseDir, 'bin', 'TortoiseMerge.exe');
+          const mergePath = path.join(tortoiseDir, "bin", "TortoiseMerge.exe");
           if (fs.existsSync(mergePath)) {
             return { found: true, path: mergePath };
           }
@@ -172,8 +213,8 @@ const ConfigManager = {
 
     // Fallback: check common installation directories
     const commonPaths = [
-      'C:\\Program Files\\TortoiseSVN\\bin\\TortoiseMerge.exe',
-      'C:\\Program Files (x86)\\TortoiseSVN\\bin\\TortoiseMerge.exe'
+      "C:\\Program Files\\TortoiseSVN\\bin\\TortoiseMerge.exe",
+      "C:\\Program Files (x86)\\TortoiseSVN\\bin\\TortoiseMerge.exe",
     ];
 
     for (const toolPath of commonPaths) {
@@ -205,10 +246,10 @@ const ConfigManager = {
     if (!template) {
       throw new Error(`No path template found for environment: ${env}`);
     }
-    const relativePath = template.replace('{version}', version);
+    const relativePath = template.replace("{version}", version);
     return {
       repoUrl: `${project.repoUrl}/${relativePath}`,
-      wcPath: path.join(project.workingCopyRoot, relativePath)
+      wcPath: path.join(project.workingCopyRoot, relativePath),
     };
   },
 
@@ -232,16 +273,16 @@ const ConfigManager = {
    */
   async getEnvVersions(wcRoot, templates, env) {
     const pathTemplate = templates && templates[env];
-    if (!wcRoot || !pathTemplate || !pathTemplate.includes('{version}')) {
+    if (!wcRoot || !pathTemplate || !pathTemplate.includes("{version}")) {
       return [];
     }
 
-    const prefixPath = pathTemplate.split('{version}')[0];
-    const lastSlashIndex = prefixPath.lastIndexOf('/');
-    
-    let subDir = '';
+    const prefixPath = pathTemplate.split("{version}")[0];
+    const lastSlashIndex = prefixPath.lastIndexOf("/");
+
+    let subDir = "";
     let prefix = prefixPath;
-    
+
     if (lastSlashIndex !== -1) {
       subDir = prefixPath.substring(0, lastSlashIndex);
       prefix = prefixPath.substring(lastSlashIndex + 1);
@@ -249,23 +290,27 @@ const ConfigManager = {
 
     const targetDir = path.join(wcRoot, subDir);
     const config = this.load();
-    const project = config.projects.find(p => p.workingCopyRoot === wcRoot);
+    const project = config.projects.find((p) => p.workingCopyRoot === wcRoot);
     const baseUrl = project ? project.repoUrl : null;
 
     // 1. Pre-calculate other prefixes that should be excluded from this env
     // (e.g., if env is 'qat', we exclude '05-Code-Stage-' prefix from 'stg')
     const otherPrefixes = Object.keys(templates || {})
-      .filter(k => k !== env)
-      .map(k => templates[k].split('{version}')[0])
-      .filter(p => {
-        const pLastSlash = p.lastIndexOf('/');
-        const pDir = pLastSlash !== -1 ? p.substring(0, pLastSlash) : '';
+      .filter((k) => k !== env)
+      .map((k) => templates[k].split("{version}")[0])
+      .filter((p) => {
+        const pLastSlash = p.lastIndexOf("/");
+        const pDir = pLastSlash !== -1 ? p.substring(0, pLastSlash) : "";
         const pPrefix = pLastSlash !== -1 ? p.substring(pLastSlash + 1) : p;
         // Prefix must be in the same subDir, start with our prefix, and be longer
-        return pDir === subDir && pPrefix.startsWith(prefix) && pPrefix.length > prefix.length;
+        return (
+          pDir === subDir &&
+          pPrefix.startsWith(prefix) &&
+          pPrefix.length > prefix.length
+        );
       })
-      .map(p => {
-        const pLastSlash = p.lastIndexOf('/');
+      .map((p) => {
+        const pLastSlash = p.lastIndexOf("/");
         return pLastSlash !== -1 ? p.substring(pLastSlash + 1) : p;
       });
 
@@ -274,19 +319,19 @@ const ConfigManager = {
       if (!baseUrl) return [];
       const SvnBridge = getSvnBridge();
       const remotePath = `${baseUrl}/${subDir}`;
-      const res = await SvnBridge.list(remotePath.replace(/\/$/, ''));
+      const res = await SvnBridge.list(remotePath.replace(/\/$/, ""));
       if (!res.success) return [];
-      
+
       return res.entries
-        .filter(e => {
-          if (e.kind !== 'dir' || !e.name.startsWith(prefix)) return false;
+        .filter((e) => {
+          if (e.kind !== "dir" || !e.name.startsWith(prefix)) return false;
           // Must not match any longer prefix from another environment
           for (const other of otherPrefixes) {
             if (e.name.startsWith(other)) return false;
           }
           return true;
         })
-        .map(e => e.name.slice(prefix.length));
+        .map((e) => e.name.slice(prefix.length));
     })();
 
     // 3. Fetch Local Versions
@@ -294,8 +339,13 @@ const ConfigManager = {
     if (fs.existsSync(targetDir)) {
       try {
         const entries = fs.readdirSync(targetDir, { withFileTypes: true });
-        entries.forEach(e => {
-          if (!e.isDirectory() || !e.name.startsWith(prefix) || e.name === '.svn') return;
+        entries.forEach((e) => {
+          if (
+            !e.isDirectory() ||
+            !e.name.startsWith(prefix) ||
+            e.name === ".svn"
+          )
+            return;
           // Must not match any longer prefix from another environment
           for (const otherPrefix of otherPrefixes) {
             if (e.name.startsWith(otherPrefix)) return;
@@ -312,15 +362,22 @@ const ConfigManager = {
     const localSet = new Set(localVersions);
 
     // 4. Merge and mark status
-    const allVersions = Array.from(new Set([...remoteVersions, ...localVersions]));
-    
+    const allVersions = Array.from(
+      new Set([...remoteVersions, ...localVersions]),
+    );
+
     return allVersions
-      .map(v => ({
+      .map((v) => ({
         version: v,
         presentLocally: localSet.has(v),
-        presentRemotely: remoteSet.has(v)
+        presentRemotely: remoteSet.has(v),
       }))
-      .sort((a, b) => a.version.localeCompare(b.version, undefined, { numeric: true, sensitivity: 'base' }));
+      .sort((a, b) =>
+        a.version.localeCompare(b.version, undefined, {
+          numeric: true,
+          sensitivity: "base",
+        }),
+      );
   },
 
   /**
@@ -338,8 +395,18 @@ const ConfigManager = {
    * }>}
    */
   async scanAndImportWorkspace(parentDir) {
-    if (!parentDir || typeof parentDir !== 'string' || parentDir.trim() === '') {
-      return { success: false, count: 0, projects: [], errors: [], saveError: 'parentDir is empty or invalid' };
+    if (
+      !parentDir ||
+      typeof parentDir !== "string" ||
+      parentDir.trim() === ""
+    ) {
+      return {
+        success: false,
+        count: 0,
+        projects: [],
+        errors: [],
+        saveError: "parentDir is empty or invalid",
+      };
     }
 
     // 2.1 Discover Fz_* directories that contain a .svn folder
@@ -347,13 +414,19 @@ const ConfigManager = {
     try {
       entries = fs.readdirSync(parentDir, { withFileTypes: true });
     } catch (err) {
-      return { success: false, count: 0, projects: [], errors: [], saveError: `Cannot read directory: ${err.message}` };
+      return {
+        success: false,
+        count: 0,
+        projects: [],
+        errors: [],
+        saveError: `Cannot read directory: ${err.message}`,
+      };
     }
 
-    const candidates = entries.filter(e => {
+    const candidates = entries.filter((e) => {
       if (!e.isDirectory()) return false;
-      if (!e.name.startsWith('Fz')) return false;
-      const svnDir = path.join(parentDir, e.name, '.svn');
+      if (!e.name.startsWith("Fz")) return false;
+      const svnDir = path.join(parentDir, e.name, ".svn");
       return fs.existsSync(svnDir);
     });
 
@@ -366,34 +439,40 @@ const ConfigManager = {
         // svn info for repo URL
         const infoResult = await SvnBridge.info(wcRoot);
         if (!infoResult.success || !infoResult.info) {
-          throw new Error(infoResult.error?.message || infoResult.error?.raw || 'svn info failed');
+          throw new Error(
+            infoResult.error?.message ||
+              infoResult.error?.raw ||
+              "svn info failed",
+          );
         }
 
         const repoUrl = infoResult.info.repositoryRoot || infoResult.info.url;
         const versions = readProjectVersions(wcRoot);
         const config = this.load();
-        const pathTemplates = config.defaultPathTemplates || { ...DEFAULT_PATH_TEMPLATES };
+        const pathTemplates = config.defaultPathTemplates || {
+          ...DEFAULT_PATH_TEMPLATES,
+        };
 
         return {
           name: entry.name,
           workingCopyRoot: wcRoot,
           repoUrl,
           versions,
-          pathTemplates
+          pathTemplates,
         };
-      })
+      }),
     );
 
     const projects = [];
     const errors = [];
 
     results.forEach((result, i) => {
-      if (result.status === 'fulfilled') {
+      if (result.status === "fulfilled") {
         projects.push(result.value);
       } else {
         errors.push({
           folder: candidates[i].name,
-          error: result.reason?.message || String(result.reason)
+          error: result.reason?.message || String(result.reason),
         });
       }
     });
@@ -408,9 +487,11 @@ const ConfigManager = {
       count: projects.length,
       projects,
       errors,
-      saveError: saveResult.success ? undefined : saveResult.error
+      saveError: saveResult.success ? undefined : saveResult.error,
     };
-  }
+  },
 };
+
+ConfigManager.DEFAULT_COMMIT_PROMPT = DEFAULT_COMMIT_PROMPT;
 
 module.exports = ConfigManager;

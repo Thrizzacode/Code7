@@ -358,6 +358,9 @@
         <h2 style="margin: 0 0 8px 0; font-size: 16px;">提交訊息 (Commit Message)</h2>
         <textarea id="standalone-commit-message" class="commit-textarea" placeholder="輸入提交訊息..."
           style="width: 100%; min-height: 80px;"></textarea>
+        <div style="display: flex; justify-content: flex-end; margin-top: 6px;">
+          <button id="btn-ai-generate" class="btn btn-secondary btn-sm" disabled>✨ AI 生成</button>
+        </div>
       </div>
 
       <!-- Commit File List -->
@@ -507,6 +510,41 @@
               <button id="btn-restart-install" class="btn btn-sm btn-primary" style="display: none;">
                 立即重啟並安裝
               </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- AI 訊息生成 -->
+        <div class="settings-section">
+          <h3>AI 訊息生成</h3>
+          <div class="form-group">
+            <label for="ai-provider">AI 提供者</label>
+            <select id="ai-provider" class="input" style="width: 100%;">
+              <option value="groq">Groq (推薦台灣使用)</option>
+              <option value="gemini">Google Gemini</option>
+            </select>
+          </div>
+          <div class="form-group" id="ai-gemini-key-group" style="margin-top: 12px;">
+            <label for="ai-api-key">Gemini API Key</label>
+            <div style="display: flex; gap: 8px; align-items: center;">
+              <input type="password" id="ai-api-key" class="input" placeholder="AIza..." style="flex: 1;" />
+              <button id="btn-save-ai-key" class="btn btn-sm btn-secondary">儲存</button>
+            </div>
+          </div>
+          <div class="form-group" id="ai-groq-key-group" style="display: none; margin-top: 12px;">
+            <label for="ai-groq-api-key">Groq API Key</label>
+            <div style="display: flex; gap: 8px; align-items: center;">
+              <input type="password" id="ai-groq-api-key" class="input" placeholder="gsk_..." style="flex: 1;" />
+              <button id="btn-save-ai-groq-key" class="btn btn-sm btn-secondary">儲存</button>
+            </div>
+          </div>
+          <div class="form-group" style="margin-top: 12px;">
+            <label for="ai-commit-prompt">提示詞</label>
+            <textarea id="ai-commit-prompt" class="input" rows="4"
+              style="width: 100%; resize: vertical; font-size: 13px;"></textarea>
+            <div style="display: flex; gap: 8px; justify-content: flex-end; margin-top: 6px;">
+              <button id="btn-reset-ai-prompt" class="btn btn-sm btn-ghost">恢復預設</button>
+              <button id="btn-save-ai-prompt" class="btn btn-sm btn-secondary">儲存提示詞</button>
             </div>
           </div>
         </div>
