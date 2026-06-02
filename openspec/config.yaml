@@ -1,0 +1,43 @@
+schema: spec-driven
+
+context: |
+  專案名稱：Code7（svn-merge-helper）
+  語言：繁體中文（zh-TW）
+  平台：Windows 桌面應用程式
+
+  技術棧：
+  - Electron（主框架）+ 原生 JavaScript（無前端框架）
+  - electron-builder 打包（NSIS 安裝程式）
+  - electron-updater 自動更新（GitHub Releases）
+  - fast-xml-parser 解析 SVN XML 輸出
+
+  專案用途：
+  輔助開發團隊進行 SVN 合併作業，簡化 branches → qat → stg 的工作流程。
+  整合 IIS 版本切換、Commit 管理、SVN Log 檢視、Revert 等功能。
+
+  架構（三層 Electron 架構）：
+  - src/main/       — 主程序：config-manager.js（設定管理）、svn-bridge.js（SVN CLI 橋接）
+  - src/preload/    — IPC 橋接：preload.js
+  - src/renderer/   — 渲染層：各功能模組（branch-selector, merge-executor, revision-picker,
+                      commit-manager, log-manager, settings, toast, modal 等）
+
+  設定檔位置：
+  - 使用者設定（config.json）存放於 %APPDATA%\Code7\
+  - 專案設定（.spectra.yaml）位於根目錄
+
+  開發慣例：
+  - Git commit 使用 Conventional Commits 格式
+  - 主要代碼位於 svn-merge-helper/ 子目錄
+  - 使用 Spectra 進行規格驅動開發（SDD），specs 在 openspec/specs/
+
+rules:
+  proposal:
+    - 以繁體中文撰寫所有 artifact
+    - 說明清楚對 Electron 主程序／渲染程序的影響範圍
+    - 新功能需說明是否需要新增 IPC channel
+  tasks:
+    - 每個任務專注於單一模組或檔案
+    - 涉及 UI 的任務需標註對應的 renderer JS 模組
+  design:
+    - 保持原生 JS 風格，不引入框架
+    - UI 元件需考慮現有 toast、modal 機制的整合
