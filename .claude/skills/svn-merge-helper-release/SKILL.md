@@ -23,7 +23,11 @@ description: Automates the version bump, async build, commit, and tagging proces
 - 讀取 `svn-merge-helper/package.json` 確認目前版本。
 - 使用 `replace_file_content` 工具將 `svn-merge-helper/package.json` 中的 `"version"` 欄位更新為 `<NEW_VERSION>`。
 - 根據近期變更，更新 `svn-merge-helper/CHANGELOG.md`，加入新版本與對應的發版說明。
-- 根據近期變更，更新 `svn-merge-helper/confluence.html`，加入新版本與相關文件說明。
+- 根據近期變更，**完整審閱** `svn-merge-helper/confluence.html` 全文，判斷哪些段落需要更新：
+  - **第一段簡介（`<p>✨ v...`）**：更新版本號與功能摘要。
+  - **所有功能說明章節（最後一節「版本記錄」之前的所有章節）**：若本次新增、移除或異動了功能，對應章節的描述需一併修改；若有全新功能且現有章節無適合位置，可在「版本記錄」前新增章節。
+  - **最後一節「版本記錄 (Changelog)」**：永遠是文件的最後一節，在現有最新的 `<h4>` 前插入本次版本的 `<h4>` 標題與 `<ul>` 條列說明（格式參照現有區塊）。
+  - **文末最後更新日期**：更新為今天的日期。
 
 ### 2. 執行非同步建置（`npm run build:win`）
 
