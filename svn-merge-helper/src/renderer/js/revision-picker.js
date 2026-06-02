@@ -11,25 +11,46 @@ const RevisionPicker = {
   _targetWcPath: null,
   _oldestRevision: null,
   _isLoading: false,
+  _selectAllMode: 'all', // 'all' | 'unmerged' | 'filtered' | 'unmerged-filtered'
 
   init() {
     // Filter input
     Utils.$('revision-filter-input').addEventListener('input', (e) => {
       this._filterText = e.target.value.trim(); // Preserve case for Regex
+      const checkbox = Utils.$('select-all-revisions');
+      if (checkbox.checked &&
+          (this._selectAllMode === 'filtered' || this._selectAllMode === 'unmerged-filtered')) {
+        this._selectedRevisions.clear();
+        this._applySelectAllMode().forEach(r => this._selectedRevisions.add(r.revision));
+        this._updateSummary();
+        MergeExecutor.updateMergeButton();
+      }
       this.render();
     });
 
     // Select all checkbox
     Utils.$('select-all-revisions').addEventListener('change', (e) => {
       if (e.target.checked) {
-        this._getUnmergedVisibleRevisions().forEach(r => this._selectedRevisions.add(r.revision));
+        this._applySelectAllMode().forEach(r => this._selectedRevisions.add(r.revision));
       } else {
-        // Deselect only unmerged ones
-        this._getUnmergedVisibleRevisions().forEach(r => this._selectedRevisions.delete(r.revision));
+        this._applySelectAllMode().forEach(r => this._selectedRevisions.delete(r.revision));
       }
       this.render();
       this._updateSummary();
       MergeExecutor.updateMergeButton();
+    });
+
+    // Select all mode dropdown
+    Utils.$('select-all-mode').addEventListener('change', (e) => {
+      this._selectAllMode = e.target.value;
+      const checkbox = Utils.$('select-all-revisions');
+      if (checkbox.checked || checkbox.indeterminate) {
+        this._selectedRevisions.clear();
+        this._applySelectAllMode().forEach(r => this._selectedRevisions.add(r.revision));
+        this._updateSummary();
+        MergeExecutor.updateMergeButton();
+      }
+      this.render();
     });
 
     // Load more button
@@ -213,6 +234,7 @@ const RevisionPicker = {
         </tr>
       `;
     }).join('');
+    this._updateSelectAllCheckbox();
   },
 
   _getVisibleRevisions() {
@@ -221,6 +243,32 @@ const RevisionPicker = {
 
   _getUnmergedVisibleRevisions() {
     return this._getVisibleRevisions().filter(entry => this._eligibleRevisions.has(entry.revision));
+  },
+
+  _getUnmergedAllRevisions() {
+    return this._allRevisions.filter(entry => this._eligibleRevisions.has(entry.revision));
+  },
+
+  _applySelectAllMode() {
+    switch (this._selectAllMode) {
+      case 'unmerged':          return this._getUnmergedAllRevisions();
+      case 'filtered':          return this._getVisibleRevisions();
+      case 'unmerged-filtered': return this._getUnmergedVisibleRevisions();
+      default:                  return this._allRevisions;
+    }
+  },
+
+  _updateSelectAllCheckbox() {
+    const checkbox = Utils.$('select-all-revisions');
+    const targets = this._applySelectAllMode();
+    const selectedCount = targets.filter(r => this._selectedRevisions.has(r.revision)).length;
+    if (targets.length === 0 || selectedCount === 0) {
+      checkbox.checked = false; checkbox.indeterminate = false;
+    } else if (selectedCount === targets.length) {
+      checkbox.checked = true; checkbox.indeterminate = false;
+    } else {
+      checkbox.checked = false; checkbox.indeterminate = true;
+    }
   },
 
   _updateSummary() {
