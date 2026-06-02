@@ -8,6 +8,7 @@ const LogManager = {
   _selectedRevision: null,
   _limit: 100,
   _repoRoot: null,
+  _localRevision: null,
 
   /**
    * Show the log modal for a specific path.
@@ -19,6 +20,7 @@ const LogManager = {
     this._filteredEntries = [];
     this._selectedRevision = null;
     this._repoRoot = null;
+    this._localRevision = null;
 
     // Fetch repo info to get repositoryRoot for URL concatenation
     const infoRes = await window.svnApi.info(path);
@@ -32,6 +34,7 @@ const LogManager = {
           <input type="text" id="log-search-input" placeholder="搜尋作者、版本或訊息關鍵字..." class="input" style="flex-grow: 1;" />
           <button id="btn-log-refresh" class="btn btn-primary" style="padding: 0 15px;">🔄 重新整理</button>
         </div>
+        <div id="log-revision-status" class="log-revision-status">檢查版本狀態中...</div>
         <div class="log-main-split">
           <div class="log-list-section">
             <table class="revision-table">
@@ -94,9 +97,34 @@ const LogManager = {
 
   async refresh() {
     const listBody = Utils.$('log-list-body');
+    const statusBar = Utils.$('log-revision-status');
     listBody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 40px;">正在重新整理...</td></tr>';
-    
-    const result = await window.svnApi.log(this._currentPath, { limit: this._limit });
+    if (statusBar) statusBar.textContent = '檢查版本狀態中...';
+
+    const [result, localInfoRes, headInfoRes] = await Promise.all([
+      window.svnApi.log(this._currentPath, { limit: this._limit }),
+      window.svnApi.info(this._currentPath),
+      window.svnApi.info(this._currentPath, { revision: 'HEAD' })
+    ]);
+
+    if (statusBar && localInfoRes.success && headInfoRes.success) {
+      const localRev = localInfoRes.info.lastChangedRevision;
+      const headRev = headInfoRes.info.lastChangedRevision;
+      this._localRevision = localRev;
+      const newCount = result.success
+        ? result.entries.filter(e => e.revision > localRev).length
+        : 0;
+      if (newCount <= 0) {
+        statusBar.innerHTML = `本機版本: <strong>r${localRev}</strong> ／ 伺服器最新: <strong>r${headRev}</strong> <span class="rev-status-ok">✓ 已是最新版本</span>`;
+        statusBar.className = 'log-revision-status';
+      } else {
+        statusBar.innerHTML = `本機版本: <strong>r${localRev}</strong> ／ 伺服器最新: <strong>r${headRev}</strong> <span class="rev-status-behind">⚠ 落後 ${newCount} 個版本</span>`;
+        statusBar.className = 'log-revision-status log-revision-status--behind';
+      }
+    } else if (statusBar) {
+      statusBar.textContent = '無法取得版本狀態';
+    }
+
     if (result.success) {
       this._logEntries = result.entries;
       this._filteredEntries = [...this._logEntries];
@@ -120,13 +148,14 @@ const LogManager = {
 
     listBody.innerHTML = '';
     this._filteredEntries.forEach(entry => {
+      const isNew = this._localRevision !== null && entry.revision > this._localRevision;
       const tr = document.createElement('tr');
-      tr.className = 'log-entry-row' + (this._selectedRevision === entry.revision ? ' active' : '');
+      tr.className = 'log-entry-row' + (isNew ? ' log-entry-new' : '') + (this._selectedRevision === entry.revision ? ' active' : '');
       tr.innerHTML = `
         <td style="font-family: var(--font-mono); font-weight: 600; color: var(--accent);">${entry.revision}</td>
         <td>${Utils.escapeHtml(entry.author)}</td>
         <td style="font-size: 0.85em; color: var(--text-secondary);">${Utils.formatDateTime(entry.date)}</td>
-        <td class="text-truncate" title="${Utils.escapeHtml(entry.message)}">${Utils.escapeHtml(entry.message)}</td>
+        <td class="text-truncate" title="${Utils.escapeHtml(entry.message)}">${Utils.escapeHtml(entry.message)}${isNew ? ' <span class="log-new-badge">NEW</span>' : ''}</td>
       `;
       tr.addEventListener('click', () => this.selectRevision(entry));
       listBody.appendChild(tr);

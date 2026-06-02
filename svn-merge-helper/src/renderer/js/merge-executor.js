@@ -243,7 +243,13 @@ const MergeExecutor = {
         </div>
       `,
       buttons: [
-        { text: '稍後再說', className: 'btn-ghost', onClick: () => Modal.hide() },
+        { text: '稍後再說', className: 'btn-ghost', onClick: () => {
+            Modal.hide();
+            if (paths.sourceUrl && paths.targetWcPath) {
+              RevisionPicker.loadRevisions(paths.sourceUrl, paths.targetWcPath);
+            }
+          }
+        },
         {
           text: '提交 (Commit)',
           className: 'btn-primary',
@@ -254,7 +260,7 @@ const MergeExecutor = {
               return;
             }
             Modal.hide();
-            await this._executeCommit(paths.targetWcPath, msg);
+            await this._executeCommit(paths.targetWcPath, msg, paths.sourceUrl);
           }
         }
       ]
@@ -264,7 +270,7 @@ const MergeExecutor = {
   /**
    * Execute the SVN commit.
    */
-  async _executeCommit(wcPath, message) {
+  async _executeCommit(wcPath, message, sourceUrl) {
     Toast.show('warning', '提交中...', '正在執行 svn commit...', 0);
 
     const result = await window.svnApi.commit(wcPath, message);
@@ -279,6 +285,9 @@ const MergeExecutor = {
     if (result.success) {
       const revMsg = result.revision ? `Committed revision ${result.revision}` : '提交成功';
       Toast.success('提交成功', revMsg);
+      if (sourceUrl && wcPath) {
+        RevisionPicker.loadRevisions(sourceUrl, wcPath);
+      }
     } else {
       const errMsg = result.error?.message || result.error?.raw || 'Commit failed';
 

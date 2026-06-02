@@ -56,8 +56,8 @@ function registerIpcHandlers() {
     return SvnBridge.log(svnPath, options);
   });
 
-  ipcMain.handle("svn:info", async (_event, svnPath) => {
-    return SvnBridge.info(svnPath);
+  ipcMain.handle("svn:info", async (_event, svnPath, options) => {
+    return SvnBridge.info(svnPath, options);
   });
 
   ipcMain.handle("svn:status", async (_event, svnPath) => {

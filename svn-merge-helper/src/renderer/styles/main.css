@@ -1583,6 +1583,54 @@ html, body {
 }
 
 /* ─── Log Modal ─── */
+.log-revision-status {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-xs) var(--space-md);
+  font-size: 12px;
+  color: var(--text-secondary);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+
+.log-revision-status--behind {
+  border-color: rgba(251, 191, 36, 0.4);
+  background: var(--warning-soft);
+}
+
+.rev-status-ok {
+  color: var(--success);
+  font-weight: 600;
+}
+
+.rev-status-behind {
+  color: var(--warning);
+  font-weight: 600;
+}
+
+.log-entry-new {
+  background: rgba(251, 191, 36, 0.06) !important;
+}
+
+.log-entry-new td:first-child {
+  box-shadow: inset 3px 0 0 var(--warning);
+}
+
+.log-new-badge {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 5px;
+  border-radius: 3px;
+  background: var(--warning-soft);
+  color: var(--warning);
+  border: 1px solid rgba(251, 191, 36, 0.4);
+  vertical-align: middle;
+  margin-left: 4px;
+}
+
 .log-modal-container {
   display: flex;
   flex-direction: column;

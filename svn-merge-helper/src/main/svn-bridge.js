@@ -1,4 +1,5 @@
 const { execFile, spawn } = require('child_process');
+const path = require('path');
 const { XMLParser } = require('fast-xml-parser');
 
 const DEFAULT_TIMEOUT = 30000; // 30 seconds
@@ -188,9 +189,14 @@ const SvnBridge = {
    * @param {string} svnPath
    * @returns {Promise<{success: boolean, info?: RepoInfo, error?: object}>}
    */
-  async info(svnPath) {
+  async info(svnPath, options = {}) {
     try {
-      const stdout = await execSvn(['info', '--xml', svnPath]);
+      const args = ['info', '--xml'];
+      if (options.revision) {
+        args.push('--revision', String(options.revision));
+      }
+      args.push(svnPath);
+      const stdout = await execSvn(args);
       const info = parseInfoXml(stdout);
       return { success: true, info };
     } catch (err) {
@@ -326,15 +332,56 @@ const SvnBridge = {
   },
 
   /**
+   * Retrieve SVN conflict file paths for a conflicted file via `svn info --xml`.
+   * Returns { base, theirs, mine } relative paths resolved to absolute paths,
+   * or null if the file has no conflict info.
+   */
+  async _getConflictFiles(filePath) {
+    try {
+      const xml = await execSvn(['info', '--xml', filePath]);
+      const parsed = xmlParser.parse(xml);
+      const entry = parsed?.info?.entry;
+      const conflict = entry?.['wc-info']?.conflict;
+      if (!conflict) return null;
+
+      const dir = path.dirname(filePath);
+      const resolve = (p) => (p ? path.resolve(dir, p) : null);
+
+      return {
+        base:   resolve(conflict['prev-base-file']),
+        theirs: resolve(conflict['cur-base-file']),
+        mine:   resolve(conflict['prev-wc-file']),
+      };
+    } catch {
+      return null;
+    }
+  },
+
+  /**
    * Launch an external merge tool for a conflicted file.
    * @param {string} toolPath - Path to the merge tool executable
    * @param {string} filePath - Conflicted file path
    * @returns {Promise<{success: boolean, error?: string}>}
    */
   async launchExternalTool(toolPath, filePath) {
+    const conflictFiles = await this._getConflictFiles(filePath);
+
+    let args;
+    if (conflictFiles && conflictFiles.base && conflictFiles.theirs && conflictFiles.mine) {
+      args = [
+        `/base:${conflictFiles.base}`,
+        `/theirs:${conflictFiles.theirs}`,
+        `/mine:${conflictFiles.mine}`,
+        `/merged:${filePath}`,
+      ];
+    } else {
+      // Fallback: let TortoiseMerge open the file directly
+      args = [filePath];
+    }
+
     return new Promise((resolve) => {
       try {
-        const child = spawn(toolPath, [filePath], {
+        const child = spawn(toolPath, args, {
           detached: true,
           stdio: 'ignore'
         });

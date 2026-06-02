@@ -4,7 +4,7 @@ contextBridge.exposeInMainWorld('svnApi', {
   // SVN Bridge
   checkAvailability: () => ipcRenderer.invoke('svn:check-availability'),
   log: (svnPath, options) => ipcRenderer.invoke('svn:log', svnPath, options),
-  info: (svnPath) => ipcRenderer.invoke('svn:info', svnPath),
+  info: (svnPath, options) => ipcRenderer.invoke('svn:info', svnPath, options),
   status: (svnPath) => ipcRenderer.invoke('svn:status', svnPath),
   merge: (sourceUrl, targetWcPath, revisions) => ipcRenderer.invoke('svn:merge', sourceUrl, targetWcPath, revisions),
   commit: (wcPath, message, filesArray) => ipcRenderer.invoke('svn:commit', wcPath, message, filesArray),
