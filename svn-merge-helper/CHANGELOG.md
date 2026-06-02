@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.8.0] - 2026-06-02
+
+### Added
+- **SVN Log 伺服器同步**：Log 歷史紀錄現在直接從 SVN Server 拉取（`HEAD:1`），不再受限於本機 Working Copy 的版本，確保即時顯示最新 commit。
+- **版本狀態列**：Log 視窗新增狀態列，顯示「本機版本」與「伺服器最新版本」的差距，一目瞭然是否需要 `svn update`；若落後則以橘黃色警示。
+- **NEW 標記**：尚未 update 到本機的新 commit 會以醒目的 NEW 標籤與左側色條標示。
+- **Log 正規表達式搜尋**：搜尋框支援 RegExp，可精確過濾作者、版本號或 commit 訊息。
+- **Merge 後自動重整**：執行 Merge 並 Commit 或選擇稍後再說後，Revision Picker 會自動重新整理已合併清單。
+
+### Fixed
+- **版本號防護**：開啟 Log 前若尚未選擇版本，改為顯示提示訊息，避免以空路徑呼叫 SVN 指令。
+
 ## [1.7.0] - 2026-04-17
 
 ### Added
