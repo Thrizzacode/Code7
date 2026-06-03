@@ -130,7 +130,8 @@ const LogManager = {
       this._filteredEntries = [...this._logEntries];
       this._renderList();
     } else {
-      listBody.innerHTML = `<tr><td colspan="4" style="text-align: center; padding: 40px; color: var(--danger-color);">錯誤: ${result.error}</td></tr>`;
+      const errMsg = result.error?.message || result.error?.raw || String(result.error);
+      listBody.innerHTML = `<tr><td colspan="4" style="text-align: center; padding: 40px; color: var(--danger-color);">錯誤: ${Utils.escapeHtml(errMsg)}</td></tr>`;
     }
   },
 

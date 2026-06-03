@@ -129,6 +129,44 @@ const Utils = {
   },
 
   /**
+   * Show an error toast with a copy button for the error details.
+   * @param {string} title
+   * @param {string|Object} error - string or object with a `message` field
+   */
+  showErrorWithCopy(title, error) {
+    const errorText = (error && typeof error === 'object')
+      ? (error.message || JSON.stringify(error))
+      : String(error || '');
+
+    const container = Utils.$('toast-container');
+    if (!container) return;
+
+    const toast = document.createElement('div');
+    toast.className = 'toast toast-error';
+    toast.innerHTML = `
+      <span class="toast-icon">✕</span>
+      <div class="toast-content">
+        <div class="toast-title">${Utils.escapeHtml(title)}</div>
+        ${errorText ? `<div class="toast-message">${Utils.escapeHtml(errorText)}</div>` : ''}
+      </div>
+      <button class="toast-copy" title="複製錯誤訊息">⎘</button>
+      <button class="toast-close" title="關閉">✕</button>
+    `;
+
+    toast.querySelector('.toast-close').addEventListener('click', () => {
+      toast.classList.add('removing');
+      setTimeout(() => { if (toast.parentNode) toast.parentNode.removeChild(toast); }, 200);
+    });
+
+    toast.querySelector('.toast-copy').addEventListener('click', async () => {
+      const copied = await Utils.copyToClipboard(`${title}\n${errorText}`);
+      if (copied) Toast.success('已複製', '錯誤訊息已複製到剪貼簿');
+    });
+
+    container.appendChild(toast);
+  },
+
+  /**
    * Show a toast message.
    * @param {string} message
    * @param {string} type - 'info', 'success', 'error', 'progress'

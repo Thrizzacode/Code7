@@ -985,6 +985,20 @@ html, body {
   color: var(--text-primary);
 }
 
+.toast-copy {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 4px;
+  font-size: 14px;
+  transition: color var(--transition-fast);
+}
+
+.toast-copy:hover {
+  color: var(--text-primary);
+}
+
 .toast.toast-success { border-left: 4px solid var(--success); }
 .toast.toast-success .toast-icon { color: var(--success); }
 .toast.toast-error { border-left: 4px solid var(--error); }

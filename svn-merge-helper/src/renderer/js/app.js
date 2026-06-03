@@ -21,6 +21,7 @@ const App = {
     BranchSelector.init();
     RevisionPicker.init();
     MergeExecutor.init();
+    if (window.ChainedMerge) ChainedMerge.init();
 
     // ─── Step 3: Global Navigation ───
     Utils.$('app-logo').addEventListener('click', () => {

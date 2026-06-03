@@ -114,6 +114,9 @@ const BranchSelector = {
     MergeExecutor.updateMergeButton();
     this._updateDisabledState();
 
+    // Reset chained-merge controls for the new project.
+    if (window.ChainedMerge) ChainedMerge.onProjectChange();
+
     // Set defaults: branches -> qat
     if (this._currentProject) {
       Utils.$('source-env').value = 'branches';
@@ -279,9 +282,9 @@ const BranchSelector = {
       return;
     }
 
-    const relativePath = template.replace('{version}', version);
-    const repoUrl = `${this._currentProject.repoUrl}/${relativePath}`;
-    const wcPath = `${this._currentProject.workingCopyRoot}/${relativePath}`;
+    const resolved = this.resolvePath(env, version);
+    const repoUrl = resolved.repoUrl;
+    const wcPath = resolved.wcPath;
 
     const versions = side === 'source' ? this._sourceVersions : 
                      side === 'target' ? this._targetVersions : this._commitVersions;
@@ -441,6 +444,34 @@ const BranchSelector = {
       RevisionPicker.clear();
     }
     MergeExecutor.updateMergeButton();
+    // Re-evaluate chained-merge availability (only valid for branches → qat).
+    if (window.ChainedMerge) ChainedMerge.refreshAvailability();
+  },
+
+  /**
+   * Resolve the repo URL and working-copy path for a given env + version
+   * using the current project's path templates.
+   * @param {string} env - one of branches/qat/stg
+   * @param {string} version
+   * @returns {{repoUrl:string, wcPath:string}|null} null if unavailable
+   */
+  resolvePath(env, version) {
+    if (!this._currentProject || !env || !version) return null;
+    const templates = this._currentProject.pathTemplates || {};
+    const template = templates[env];
+    if (!template) return null;
+    const relativePath = template.replace('{version}', version);
+    return {
+      repoUrl: `${this._currentProject.repoUrl}/${relativePath}`,
+      wcPath: `${this._currentProject.workingCopyRoot}/${relativePath}`
+    };
+  },
+
+  /**
+   * Expose the currently selected project (used by the chained merge entry).
+   */
+  getCurrentProject() {
+    return this._currentProject;
   },
 
   /**

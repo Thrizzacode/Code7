@@ -185,12 +185,20 @@ const CommitManager = {
         revertBtnHTML = '<button class="btn btn-sm btn-action revert-btn" title="還原變更 (Revert)" style="padding: 2px 6px; background: transparent; border: none; cursor: pointer; border-radius: 4px;">↩️</button>';
       }
 
-      if (['modified', 'conflicted', 'deleted'].includes(entry.itemStatus)) {
+      if (entry.itemStatus === 'conflicted') {
+        actionBtnHTML = '<button class="btn btn-sm btn-action preview-btn" title="解決衝突 (TortoiseMerge) / 支援快點兩下" style="padding: 2px 6px; background: transparent; border: none; cursor: pointer; border-radius: 4px;">🔀</button>';
+        actionType = 'merge';
+      } else if (['modified', 'deleted'].includes(entry.itemStatus)) {
         actionBtnHTML = '<button class="btn btn-sm btn-action preview-btn" title="比對差異 (Diff) / 支援快點兩下" style="padding: 2px 6px; background: transparent; border: none; cursor: pointer; border-radius: 4px;">🔍</button>';
         actionType = 'diff';
       } else if (['added', 'unversioned'].includes(entry.itemStatus)) {
         actionBtnHTML = '<button class="btn btn-sm btn-action preview-btn" title="開啟檔案 (Open) / 支援快點兩下" style="padding: 2px 6px; background: transparent; border: none; cursor: pointer; border-radius: 4px;">📝</button>';
         actionType = 'open';
+      }
+
+      let resolveBtnHTML = '';
+      if (entry.itemStatus === 'missing') {
+        resolveBtnHTML = '<button class="btn btn-sm btn-action resolve-btn" title="標記為已解決 (Resolve)" style="padding: 2px 6px; background: transparent; border: none; cursor: pointer; border-radius: 4px;">✓</button>';
       }
 
       const logBtnHTML = '<button class="btn btn-sm btn-action log-btn" title="查看日誌 (Log)" style="padding: 2px 6px; background: transparent; border: none; cursor: pointer; border-radius: 4px;">📜</button>';
@@ -203,7 +211,7 @@ const CommitManager = {
         <td class="path-cell" title="${entry.path}">${this._getRelativePath(entry.path)}</td>
         <td style="text-align: right; padding-right: 16px;">
           <div style="display: flex; gap: 4px; justify-content: flex-end; align-items: center;">
-            ${actionBtnHTML}${logBtnHTML}${revertBtnHTML}
+            ${actionBtnHTML}${resolveBtnHTML}${logBtnHTML}${revertBtnHTML}
           </div>
         </td>
       `;
@@ -231,6 +239,15 @@ const CommitManager = {
             await window.svnApi.openDiff(entry.path);
           } else if (actionType === 'open') {
             await window.svnApi.openFile(entry.path);
+          } else if (actionType === 'merge') {
+            const launchResult = await window.svnApi.launchMergeTool(entry.path);
+            if (!launchResult.success) {
+              if (launchResult.error === 'Merge tool path not configured') {
+                Toast.warning('未設定合併工具', '請至設定頁面配置 TortoiseMerge 路徑');
+              } else {
+                Utils.showErrorWithCopy('無法開啟合併工具', launchResult.error);
+              }
+            }
           }
         } catch (err) {
           console.error('Failed to trigger preview action:', err);
@@ -261,6 +278,29 @@ const CommitManager = {
         logBtn.addEventListener('click', (e) => {
           e.stopPropagation();
           LogManager.show(entry.path);
+        });
+      }
+
+      const resolveBtn = tr.querySelector('.resolve-btn');
+      if (resolveBtn) {
+        resolveBtn.addEventListener('click', async (e) => {
+          e.stopPropagation();
+          const relPath = this._getRelativePath(entry.path);
+          const confirmed = await Modal.confirm(
+            '解決衝突確認',
+            `確定要將此檔案標記為已解決嗎？\n[ ${relPath} ]\n這將接受「刪除」作為衝突的解決結果。`,
+            '確認解決',
+            'btn-danger'
+          );
+          if (confirmed) {
+            const result = await window.svnApi.resolve(entry.path);
+            if (result.success) {
+              Toast.success('已標記為解決', relPath);
+              this.refresh();
+            } else {
+              Utils.showErrorWithCopy('解決衝突失敗', result.error);
+            }
+          }
         });
       }
 

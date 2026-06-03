@@ -324,6 +324,15 @@
         <div class="action-bar-info">
           <span id="merge-summary"></span>
         </div>
+        <label class="checkbox-label" id="chain-to-stg-label" title="需先選擇 來源=branches、目標=qat 才能啟用"
+          style="margin-right: 8px;">
+          <input type="checkbox" id="chain-to-stg" disabled />
+          <span>🔗 戀式合併(實驗性功能)</span>
+        </label>
+        <select id="chain-stg-version" class="select select-sm"
+          style="display: none; width: auto; min-width: 140px; margin-right: 8px;">
+          <option value="">選擇 STG 版本...</option>
+        </select>
         <button id="btn-merge" class="btn btn-primary btn-lg" disabled>
           執行合併 (Merge)
         </button>
@@ -514,7 +523,9 @@
           <div class="form-group" id="ai-groq-key-group" style="display: none; margin-top: 12px;">
             <div style="display: flex; justify-content: space-between; align-items: center;">
               <label for="ai-groq-api-key">Groq API Key</label>
-              <span id="groq-get-api-key-link" style="font-size: 12px; color: var(--accent-color, #e05252); cursor: pointer; text-decoration: underline;">取得 API Key →</span>
+              <span id="groq-get-api-key-link"
+                style="font-size: 12px; color: var(--accent-color, #e05252); cursor: pointer; text-decoration: underline;">取得
+                API Key →</span>
             </div>
             <div style="display: flex; gap: 8px; align-items: center;">
               <input type="password" id="ai-groq-api-key" class="input" placeholder="gsk_..." style="flex: 1;" />
@@ -580,6 +591,7 @@
   <script src="js/revision-picker.js"></script>
   <script src="js/merge-context.js"></script>
   <script src="js/merge-executor.js"></script>
+  <script src="js/chained-merge.js"></script>
   <script src="js/commit-manager.js"></script>
   <script src="js/app.js"></script>
   <!-- Progress Toast Container -->
