@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.10.0] - 2026-06-03
+
+### Added
+- **鏈式合併 (Chained Merge)**（實驗性）：當來源為 branches、目標為 qat 時，可勾選「🔗 鏈式合併」選項，系統會先執行 branches → QAT 合併，完成後自動選取 STG 版本繼續執行 QAT → STG 合併，一次操作完成雙段合併流程。
+
 ## [1.9.0] - 2026-06-02
 
 ### Added

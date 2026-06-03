@@ -1,6 +1,6 @@
 ﻿<h2 style="margin-left: 0.0px;">1. 簡介</h2>
 <p>Code7 是一款專為簡化 SVN 合併流程設計的桌面工具。它能自動識別專案路徑，協助開發者快速在 branches、qat 與 stg 三大環境之間進行代碼合併、衝突處理與工作目錄同步。</p>
-<p>✨ v1.9.x 新功能： AI 自動生成 Commit Message（支援 Groq / Gemini）、合併成功後自動帶入 Merged revision 訊息、合併與提交前版本落後警告，以及 Revision Picker 彈性全選模式。</p>
+<p>✨ v1.10.x 新功能：鏈式合併（branches→QAT→STG 一次搞定，實驗性功能）。v1.9.x：AI 自動生成 Commit Message（支援 Groq / Gemini）、合併成功後自動帶入 Merged revision 訊息、合併與提交前版本落後警告，以及 Revision Picker 彈性全選模式。</p>
 <h2 style="margin-left: 0.0px;">2. 快速入門：首次執行</h2>
 <p>若您是第一次開啟 Code7，系統會引導您進行初始設定：</p>
 <ol>
@@ -37,6 +37,9 @@
     </ul>
   </li>
   <li>點擊下方的 「執行合併 (Merge)」。系統會先檢查本地版本是否落後伺服器 HEAD，若落後會要求確認再繼續。</li>
+  <li>
+    <strong>🔗 鏈式合併（實驗性）</strong>：當來源為 <code>branches</code>、目標為 <code>qat</code> 時，勾選「🔗 鏈式合併」並選擇 STG 版本，系統會在 branches→QAT 合併完成後，自動接續執行 QAT→STG 合併，一次流程完成雙段合併。
+  </li>
   <li>
     <strong>後續流程判斷</strong>：<ul>
       <li>
@@ -131,6 +134,12 @@
   </li>
 </ul>
 <h2 style="margin-left: 0.0px;">8. 版本記錄 (Changelog)</h2>
+<h4 style="margin-left: 0.0px;">v1.10.0 (2026-06-03)</h4>
+<ul>
+  <li>
+    <strong>【新增】鏈式合併（實驗性）</strong>：來源 branches + 目標 qat 時，勾選「🔗 鏈式合併」並指定 STG 版本，系統自動依序執行 branches→QAT、QAT→STG 雙段合併，省去手動切換步驟。
+  </li>
+</ul>
 <h4 style="margin-left: 0.0px;">v1.9.0 (2026-06-02)</h4>
 <ul>
   <li>
@@ -234,4 +243,4 @@
   <li>正式發布版本。</li>
 </ul>
 <hr />
-<p>(本文檔由 Code7 開發團隊維護，最後更新日期：2026-06-02)</p>
+<p>(本文檔由 Code7 開發團隊維護，最後更新日期：2026-06-03)</p>
