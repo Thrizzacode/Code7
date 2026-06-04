@@ -20,14 +20,18 @@ const MergeExecutor = {
     const btn = Utils.$('btn-merge');
     const selected = RevisionPicker.getSelectedRevisions();
     const valid = BranchSelector.isValid();
+    const chainChecked = window.ChainedMerge && !!Utils.$('chain-to-stg')?.checked;
+    const chainReady = chainChecked && ChainedMerge.isEnabled();
 
-    btn.disabled = !valid || selected.length === 0;
+    btn.disabled = !valid || selected.length === 0 || (chainChecked && !chainReady);
 
     if (!valid) {
       btn.title = '請選擇來源與目標分支';
     } else if (selected.length === 0) {
       btn.title = 'Select at least one revision to merge';
-    } else if (window.ChainedMerge && ChainedMerge.isEnabled()) {
+    } else if (chainChecked && !chainReady) {
+      btn.title = '鏈式合併：請先選擇 STG 版本';
+    } else if (chainReady) {
       btn.title = `鏈式合併 ${selected.length} 筆 revision：branches → qat → stg`;
     } else {
       btn.title = `合併 ${selected.length} 筆 revision`;
