@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.10.1] - 2026-06-04
+
+### Fixed
+- **鏈式合併 STG 版本驗證**：勾選「🔗 鏈式合併」但尚未選擇 STG 版本時，「執行合併」按鈕現在會正確禁用，並顯示提示訊息「鏈式合併：請先選擇 STG 版本」。
+- **UI 文字修正**：修正鏈式合併 checkbox 標籤錯字（戀式合併 → 鍊式合併）；AI 訊息生成設定區塊標題加入「實驗性功能」標示。
+
 ## [1.10.0] - 2026-06-03
 
 ### Added
