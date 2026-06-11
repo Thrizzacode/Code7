@@ -1,6 +1,6 @@
 ﻿<h2 style="margin-left: 0.0px;">1. 簡介</h2>
 <p>Code7 是一款專為簡化 SVN 合併流程設計的桌面工具。它能自動識別專案路徑，協助開發者快速在 branches、qat 與 stg 三大環境之間進行代碼合併、衝突處理與工作目錄同步。</p>
-<p>✨ v1.10.x 新功能：鏈式合併（branches→QAT→STG 一次搞定，實驗性功能）。v1.9.x：AI 自動生成 Commit Message（支援 Groq / Gemini）、合併成功後自動帶入 Merged revision 訊息、合併與提交前版本落後警告，以及 Revision Picker 彈性全選模式。</p>
+<p>✨ v1.11.x 新功能：Revision 顯示篩選器（全部 / 未合併 / 已合併三段式切換）。v1.10.x：鏈式合併（branches→QAT→STG 一次搞定，實驗性功能）。v1.9.x：AI 自動生成 Commit Message（支援 Groq / Gemini）、合併成功後自動帶入 Merged revision 訊息、合併與提交前版本落後警告，以及 Revision Picker 彈性全選模式。</p>
 <h2 style="margin-left: 0.0px;">2. 快速入門：首次執行</h2>
 <p>若您是第一次開啟 Code7，系統會引導您進行初始設定：</p>
 <ol>
@@ -28,6 +28,9 @@
 <ol>
   <li>
     <strong>選取 Revisions</strong>：勾選您想要合併的版本紀錄。<ul>
+      <li>
+        <strong>顯示篩選</strong>：工具列新增「全部 / 未合併 / 已合併」三段式按鈕，可快速過濾顯示的 revision；與下方文字搜尋框疊加使用效果更佳。
+      </li>
       <li>
         <strong>進階過濾</strong>：搜尋框支援 正規表達式 (RegExp)。
       </li>
@@ -134,6 +137,12 @@
   </li>
 </ul>
 <h2 style="margin-left: 0.0px;">8. 版本記錄 (Changelog)</h2>
+<h4 style="margin-left: 0.0px;">v1.11.0 (2026-06-11)</h4>
+<ul>
+  <li>
+    <strong>【新增】Revision 顯示篩選器</strong>：Revision 列表工具列新增「全部 / 未合併 / 已合併」三段式篩選按鈕，可快速切換顯示對應狀態的 revision；與文字搜尋框疊加使用，切換來源/目標時自動重置為「全部」。
+  </li>
+</ul>
 <h4 style="margin-left: 0.0px;">v1.10.1 (2026-06-04)</h4>
 <ul>
   <li>
@@ -252,4 +261,4 @@
   <li>正式發布版本。</li>
 </ul>
 <hr />
-<p>(本文檔由 Code7 開發團隊維護，最後更新日期：2026-06-04)</p>
+<p>(本文檔由 Code7 開發團隊維護，最後更新日期：2026-06-11)</p>

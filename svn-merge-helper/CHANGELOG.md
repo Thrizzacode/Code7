@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.11.0] - 2026-06-11
+
+### Added
+- **Revision 顯示篩選器**：Revision 列表工具列新增「全部 / 未合併 / 已合併」三段式篩選按鈕，可快速切換顯示對應狀態的 revision，與文字搜尋框疊加使用；切換來源/目標時自動重置為「全部」。
+
 ## [1.10.1] - 2026-06-04
 
 ### Fixed
