@@ -12,8 +12,20 @@ const RevisionPicker = {
   _oldestRevision: null,
   _isLoading: false,
   _selectAllMode: 'all', // 'all' | 'unmerged' | 'filtered' | 'unmerged-filtered'
+  _viewFilter: 'all', // 'all' | 'unmerged' | 'merged'
 
   init() {
+    // View filter buttons
+    document.querySelectorAll('[data-view-filter]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        this._viewFilter = btn.dataset.viewFilter;
+        document.querySelectorAll('[data-view-filter]').forEach(b =>
+          b.classList.toggle('active', b === btn)
+        );
+        this.render();
+      });
+    });
+
     // Filter input
     Utils.$('revision-filter-input').addEventListener('input', (e) => {
       this._filterText = e.target.value.trim(); // Preserve case for Regex
@@ -183,6 +195,10 @@ const RevisionPicker = {
     this._currentPath = null;
     this._filterText = '';
     this._isLoading = false;
+    this._viewFilter = 'all';
+    document.querySelectorAll('[data-view-filter]').forEach(b =>
+      b.classList.toggle('active', b.dataset.viewFilter === 'all')
+    );
     Utils.$('revision-filter-input').value = '';
     Utils.$('select-all-revisions').checked = false;
     Utils.$('revision-tbody').innerHTML = '';
@@ -238,7 +254,15 @@ const RevisionPicker = {
   },
 
   _getVisibleRevisions() {
-    return Utils.filterByRegex(this._allRevisions, this._filterText, ['revision', 'author', 'message']);
+    let revisions = Utils.filterByRegex(this._allRevisions, this._filterText, ['revision', 'author', 'message']);
+    if (this._viewFilter === 'unmerged') {
+      revisions = revisions.filter(entry => this._eligibleRevisions.has(entry.revision));
+    } else if (this._viewFilter === 'merged') {
+      revisions = revisions.filter(entry =>
+        this._mergeinfoSuccess && !this._eligibleRevisions.has(entry.revision)
+      );
+    }
+    return revisions;
   },
 
   _getUnmergedVisibleRevisions() {
