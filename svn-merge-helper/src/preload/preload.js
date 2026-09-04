@@ -59,5 +59,13 @@ contextBridge.exposeInMainWorld('svnApi', {
   buildMergeMessage: (params) => ipcRenderer.invoke('svn:build-merge-message', params),
 
   // Shell
-  openExternal: (url) => ipcRenderer.invoke('shell:open-external', url)
+  openExternal: (url) => ipcRenderer.invoke('shell:open-external', url),
+
+  // Jenkins Publish
+  jenkinsListJobs: () => ipcRenderer.invoke('jenkins:list-jobs'),
+  jenkinsGetParams: (jobName) => ipcRenderer.invoke('jenkins:get-params', jobName),
+  jenkinsTrigger: (jobName, params) => ipcRenderer.invoke('jenkins:trigger', jobName, params),
+  jenkinsQueueStatus: (queueUrl) => ipcRenderer.invoke('jenkins:queue-status', queueUrl),
+  jenkinsBuildStatus: (jobName, buildNumber) => ipcRenderer.invoke('jenkins:build-status', jobName, buildNumber),
+  jenkinsConsole: (jobName, buildNumber, start) => ipcRenderer.invoke('jenkins:console', jobName, buildNumber, start)
 });

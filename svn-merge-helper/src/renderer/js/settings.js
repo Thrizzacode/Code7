@@ -56,6 +56,7 @@ const Settings = {
     this.registerUpdateListeners();
 
     this.initAiSettings();
+    this.initJenkinsSettings();
   },
 
   getConfig() {
@@ -204,6 +205,40 @@ type 規則（只能選一個）：
         Toast.error("儲存失敗", result.error);
       }
     });
+  },
+
+  // ── Jenkins 發布設定 (Requirement: Jenkins connection settings) ─────────────
+
+  initJenkinsSettings() {
+    const saveBtn = Utils.$("btn-save-jenkins");
+    if (!saveBtn) return;
+
+    saveBtn.addEventListener("click", async () => {
+      this._config.jenkinsBaseUrl = (
+        Utils.$("jenkins-base-url").value || ""
+      ).trim();
+      this._config.jenkinsUser = (Utils.$("jenkins-user").value || "").trim();
+      this._config.jenkinsToken = (Utils.$("jenkins-token").value || "").trim();
+      this._config.jenkinsViewName =
+        (Utils.$("jenkins-view-name").value || "").trim() || "方舟_Main_主任務";
+
+      const result = await window.svnApi.saveConfig(this._config);
+      if (result.success) {
+        Toast.success("已儲存", "Jenkins 連線設定已更新");
+      } else {
+        Toast.error("儲存失敗", result.error);
+      }
+    });
+  },
+
+  _populateJenkinsSettings() {
+    const baseUrl = Utils.$("jenkins-base-url");
+    if (!baseUrl) return;
+    baseUrl.value = this._config.jenkinsBaseUrl || "";
+    Utils.$("jenkins-user").value = this._config.jenkinsUser || "";
+    Utils.$("jenkins-token").value = this._config.jenkinsToken || "";
+    Utils.$("jenkins-view-name").value =
+      this._config.jenkinsViewName || "方舟_Main_主任務";
   },
 
   async manualCheckUpdates() {
@@ -396,6 +431,8 @@ type 規則（只能選一個）：
       geminiGroup.style.display = "";
       groqGroup.style.display = "none";
     }
+
+    this._populateJenkinsSettings();
 
     Utils.$("settings-overlay").style.display = "flex";
   },

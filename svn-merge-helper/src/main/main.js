@@ -46,6 +46,7 @@ function registerIpcHandlers() {
   const SvnBridge = require("./svn-bridge");
   const ConfigManager = require("./config-manager");
   const AiService = require("./ai-service");
+  const JenkinsService = require("./jenkins-service");
 
   // ─── SVN Bridge IPC Handlers ───────────────────────────────────────
 
@@ -355,6 +356,34 @@ function registerIpcHandlers() {
     const diffText = diffResult.success ? diffResult.diff : '';
 
     return AiService.generateCommitMessage(provider, apiKey, promptTemplate, entries || [], diffText);
+  });
+
+  // ─── Jenkins Publish IPC Handlers ─────────────────────────────────────────
+  // Design: openspec/changes/add-jenkins-publish-page/design.md
+  // 「IPC channel（main.js 註冊，preload.js 曝露為 window.svnApi 之下）」
+
+  ipcMain.handle("jenkins:list-jobs", async () => {
+    return JenkinsService.listJobs();
+  });
+
+  ipcMain.handle("jenkins:get-params", async (_event, jobName) => {
+    return JenkinsService.getJobParameters(jobName);
+  });
+
+  ipcMain.handle("jenkins:trigger", async (_event, jobName, params) => {
+    return JenkinsService.triggerBuild(jobName, params);
+  });
+
+  ipcMain.handle("jenkins:queue-status", async (_event, queueUrl) => {
+    return JenkinsService.getQueueStatus(queueUrl);
+  });
+
+  ipcMain.handle("jenkins:build-status", async (_event, jobName, buildNumber) => {
+    return JenkinsService.getBuildStatus(jobName, buildNumber);
+  });
+
+  ipcMain.handle("jenkins:console", async (_event, jobName, buildNumber, start) => {
+    return JenkinsService.getConsole(jobName, buildNumber, start);
   });
 }
 

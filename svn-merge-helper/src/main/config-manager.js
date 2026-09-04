@@ -31,6 +31,9 @@ const DEFAULT_PATH_TEMPLATES = {
   stg: "trunk/05-Code-Stage-{version}",
 };
 
+// Default Jenkins view that holds the 方舟 publish jobs.
+const DEFAULT_JENKINS_VIEW_NAME = "方舟_Main_主任務";
+
 /**
  * Get the config file path.
  * Uses Electron's app.getPath('userData') if available, else falls back to APPDATA.
@@ -65,6 +68,10 @@ function createDefaultConfig() {
     aiGroqApiKey: "",
     aiProvider: "groq",
     aiCommitPrompt: DEFAULT_COMMIT_PROMPT,
+    jenkinsBaseUrl: "",
+    jenkinsUser: "",
+    jenkinsToken: "",
+    jenkinsViewName: DEFAULT_JENKINS_VIEW_NAME,
   };
 }
 
@@ -126,6 +133,10 @@ const ConfigManager = {
           config.aiCommitPrompt !== undefined
             ? config.aiCommitPrompt
             : DEFAULT_COMMIT_PROMPT,
+        jenkinsBaseUrl: config.jenkinsBaseUrl || "",
+        jenkinsUser: config.jenkinsUser || "",
+        jenkinsToken: config.jenkinsToken || "",
+        jenkinsViewName: config.jenkinsViewName || DEFAULT_JENKINS_VIEW_NAME,
       };
     } catch {
       return createDefaultConfig();
@@ -493,5 +504,6 @@ const ConfigManager = {
 };
 
 ConfigManager.DEFAULT_COMMIT_PROMPT = DEFAULT_COMMIT_PROMPT;
+ConfigManager.DEFAULT_JENKINS_VIEW_NAME = DEFAULT_JENKINS_VIEW_NAME;
 
 module.exports = ConfigManager;

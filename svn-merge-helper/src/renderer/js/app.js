@@ -22,6 +22,7 @@ const App = {
     RevisionPicker.init();
     MergeExecutor.init();
     if (window.ChainedMerge) ChainedMerge.init();
+    if (window.PublishManager) PublishManager.init();
 
     // ─── Step 3: Global Navigation ───
     Utils.$('app-logo').addEventListener('click', () => {
@@ -84,54 +85,51 @@ const App = {
 };
 
 /**
- * ViewSwitcher — manages navigation between merge and commit views.
+ * ViewSwitcher — manages navigation between merge, commit and publish views.
  */
 const ViewSwitcher = {
   currentView: 'merge-view',
-  init() {
-    const btnMerge = Utils.$('nav-merge-view');
-    const btnCommit = Utils.$('nav-commit-view');
-    
-    if (btnMerge) {
-      btnMerge.addEventListener('click', () => this.switchView('merge-view'));
-    }
-    if (btnCommit) {
-      btnCommit.addEventListener('click', () => this.switchView('commit-view'));
-    }
+  VIEWS: [
+    { id: 'merge-view', btn: 'nav-merge-view' },
+    { id: 'commit-view', btn: 'nav-commit-view' },
+    { id: 'publish-view', btn: 'nav-publish-view' }
+  ],
 
-    // Restore last view
+  init() {
+    this.VIEWS.forEach(v => {
+      const btn = Utils.$(v.btn);
+      if (btn) btn.addEventListener('click', () => this.switchView(v.id));
+    });
+
+    // Restore last view (fall back to merge-view for unknown / stale values)
     const lastView = localStorage.getItem('code7-last-view') || 'merge-view';
-    this.switchView(lastView);
+    const known = this.VIEWS.some(v => v.id === lastView);
+    this.switchView(known ? lastView : 'merge-view');
   },
-  
+
   switchView(viewId) {
     this.currentView = viewId;
     localStorage.setItem('code7-last-view', viewId);
-    
-    // Toggle DOM elements
-    const mergeView = Utils.$('merge-view');
-    const commitView = Utils.$('commit-view');
-    
-    if (mergeView) {
-      mergeView.style.display = viewId === 'merge-view' ? 'flex' : 'none';
-    }
-    if (commitView) {
-      commitView.style.display = viewId === 'commit-view' ? 'flex' : 'none';
-    }
-    
-    // Toggle button styles
-    const btnMerge = Utils.$('nav-merge-view');
-    const btnCommit = Utils.$('nav-commit-view');
-    
-    if (btnMerge) {
-      btnMerge.className = viewId === 'merge-view' ? 'btn btn-sm active' : 'btn btn-sm btn-ghost';
-    }
-    if (btnCommit) {
-      btnCommit.className = viewId === 'commit-view' ? 'btn btn-sm active' : 'btn btn-sm btn-ghost';
-    }
-    
+
+    this.VIEWS.forEach(v => {
+      const el = Utils.$(v.id);
+      if (el) el.style.display = v.id === viewId ? 'flex' : 'none';
+      const btn = Utils.$(v.btn);
+      if (btn) {
+        btn.className = v.id === viewId ? 'btn btn-sm active' : 'btn btn-sm btn-ghost';
+      }
+    });
+
     if (viewId === 'commit-view' && window.CommitManager) {
       CommitManager.refresh();
+    }
+
+    if (window.PublishManager) {
+      if (viewId === 'publish-view') {
+        PublishManager.onEnter();
+      } else {
+        PublishManager.onLeave();
+      }
     }
   }
 };

@@ -1810,3 +1810,78 @@ html, body {
   color: var(--text-muted);
   font-style: italic;
 }
+
+/* ─── Jenkins Publish View ───────────────────────────────────────────── */
+
+.publish-job-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  cursor: pointer;
+  border-bottom: 1px solid var(--border-color);
+  font-size: 13px;
+  color: var(--text-primary);
+}
+
+.publish-job-item:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.publish-job-item.active {
+  background: var(--accent-color, #e05252);
+  color: #fff;
+}
+
+.publish-job-status {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: var(--text-muted);
+}
+
+.publish-job-status.ok { background: #3fb950; }
+.publish-job-status.fail { background: #f85149; }
+.publish-job-status.running { background: #d29922; }
+.publish-job-status.disabled { background: #6e7681; }
+
+.publish-param-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.publish-param-field > label {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.publish-param-desc {
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+.publish-param-desc p { margin: 0 0 4px; }
+
+.publish-param-unsupported {
+  font-size: 11px;
+  color: #d29922;
+}
+
+.publish-param-separator {
+  margin: 4px 0;
+}
+
+.publish-param-separator-header {
+  font-size: 14px;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+.publish-param-separator hr {
+  border: none;
+  border-top: 1px solid var(--border-color);
+  margin: 0;
+}

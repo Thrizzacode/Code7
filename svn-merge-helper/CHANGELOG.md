@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.12.0] - 2026-09-04
+
+### Added
+- **發布站點頁面 (Jenkins Publish)**：新增第三個主頁面「發布」，可直接在 App 內操作 Jenkins pipeline，不必開啟 Jenkins 網頁。
+  - 動態列出設定 View 底下的所有 job（自動過濾資料夾），反映 Jenkins 上的新增與刪除。
+  - 選定 job 後依其參數定義動態產生表單：Choice → 下拉、Boolean → 核取方塊、String → 輸入框、Text → 多行文字，並原樣顯示每個參數的說明文字；`ParameterSeparatorDefinition` 呈現為分隔線。
+  - 觸發帶參數建置後，於頁面內每 3 秒輪詢佇列與建置狀態（排隊中 → 建置中 #N → 成功／失敗），並自動展開可捲動的 Console Log。
+  - 觸發建置按鈕固定於面板右上角，進度與 Console Log 固定於面板底部。
+
+### Changed
+- **Settings 新增「Jenkins 發布」區塊**：設定 Jenkins Base URL、使用者名稱、API Token 與 View 名稱（預設「方舟_Main_主任務」）。
+
 ## [1.11.0] - 2026-06-11
 
 ### Added

@@ -138,6 +138,7 @@
           <button id="nav-merge-view" class="btn btn-sm" style="font-weight: bold; background: var(--bg-secondary);">合併
             (Merge)</button>
           <button id="nav-commit-view" class="btn btn-sm btn-ghost">提交 (Commit)</button>
+          <button id="nav-publish-view" class="btn btn-sm btn-ghost">發布 (Publish)</button>
         </nav>
       </div>
       <div class="top-bar-center">
@@ -434,6 +435,73 @@
         <button id="btn-standalone-commit" class="btn btn-primary" disabled>提交 (Commit)</button>
       </div>
     </div>
+
+    <!-- ─── Publish View ─── -->
+    <div id="publish-view" class="view-container"
+      style="display: none; padding: 20px; flex: 1; flex-direction: column; gap: 16px; min-height: 0; overflow: hidden;">
+
+      <!-- Not-configured state (Requirement: Gate publish view on configured credentials) -->
+      <div id="publish-not-configured" class="empty-state"
+        style="display: none; text-align: center; padding: 48px 24px;">
+        <p style="font-size: 15px; font-weight: 600;">尚未設定 Jenkins 連線資訊</p>
+        <p style="color: var(--text-muted); font-size: 13px; margin: 8px 0 16px;">
+          請先在設定填寫 Jenkins Base URL、使用者名稱與 API Token。</p>
+        <button id="btn-publish-goto-settings" class="btn btn-primary">前往設定</button>
+      </div>
+
+      <!-- Main content: job list + detail -->
+      <div id="publish-content"
+        style="display: none; flex: 1; gap: 16px; min-height: 0; overflow: hidden;">
+
+        <div class="publish-jobs-panel"
+          style="width: 260px; display: flex; flex-direction: column; background: var(--bg-secondary); border-radius: var(--radius-md); border: 1px solid var(--border); overflow: hidden;">
+          <div
+            style="padding: 12px 14px; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between;">
+            <span style="font-weight: 600; font-size: 13px;">Jenkins 作業</span>
+            <button id="btn-publish-refresh-jobs" class="btn btn-sm btn-ghost" title="重新整理">🔄</button>
+          </div>
+          <div id="publish-jobs-list" style="flex: 1; overflow-y: auto;"></div>
+        </div>
+
+        <div class="publish-detail-panel"
+          style="flex: 1; display: flex; flex-direction: column; background: var(--bg-secondary); border-radius: var(--radius-md); border: 1px solid var(--border); overflow: hidden;">
+          <div id="publish-detail-empty" class="empty-state"
+            style="padding: 48px 24px; text-align: center; color: var(--text-muted);">
+            <p>從左側選擇一個作業以開始發布</p>
+          </div>
+
+          <div id="publish-detail"
+            style="display: none; flex: 1; flex-direction: column; min-height: 0; overflow: hidden;">
+
+            <!-- Header: job title + trigger button (fixed, top-right) -->
+            <div
+              style="flex-shrink: 0; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 16px 20px; border-bottom: 1px solid var(--border-color);">
+              <h2 id="publish-job-title" style="margin: 0; font-size: 16px;"></h2>
+              <button id="btn-publish-trigger" class="btn btn-primary" type="button">觸發建置</button>
+            </div>
+
+            <!-- Parameter form (scrolls) -->
+            <div id="publish-detail-scroll" style="flex: 1; overflow-y: auto; padding: 16px 20px;">
+              <form id="publish-param-form" style="display: flex; flex-direction: column; gap: 16px;"></form>
+            </div>
+
+            <!-- Build progress + console (pinned to the bottom of the panel) -->
+            <div id="publish-progress"
+              style="display: none; flex-shrink: 0; border-top: 1px solid var(--border-color); padding: 12px 20px; background: var(--bg-secondary);">
+              <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+                <span id="publish-progress-stage" style="font-weight: 600;"></span>
+                <div style="display: flex; align-items: center; gap: 12px;">
+                  <span id="publish-progress-time" style="font-size: 12px; color: var(--text-muted);"></span>
+                  <button id="btn-publish-toggle-console" class="btn btn-sm btn-ghost" type="button">顯示 Console Log</button>
+                </div>
+              </div>
+              <pre id="publish-console"
+                style="display: none; margin-top: 8px; height: 260px; resize: vertical; overflow: auto; background: #111; color: #ddd; padding: 12px; border-radius: 6px; font-size: 12px; line-height: 1.5; white-space: pre-wrap; word-break: break-all;"></pre>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- ─── Modal Overlay ─── -->
@@ -548,6 +616,28 @@
           </div>
         </div>
 
+        <!-- Jenkins 發布 (Requirement: Jenkins connection settings) -->
+        <div class="settings-section">
+          <h3>Jenkins 發布</h3>
+          <div class="form-group">
+            <label for="jenkins-base-url">Base URL</label>
+            <input type="text" id="jenkins-base-url" class="input" placeholder="http://192.168.51.85:8080" />
+          </div>
+          <div class="form-group" style="margin-top: 12px;">
+            <label for="jenkins-user">使用者名稱</label>
+            <input type="text" id="jenkins-user" class="input" placeholder="Jenkins 帳號" />
+          </div>
+          <div class="form-group" style="margin-top: 12px;">
+            <label for="jenkins-token">API Token</label>
+            <input type="password" id="jenkins-token" class="input" placeholder="在 Jenkins 個人設定產生" />
+          </div>
+          <div class="form-group" style="margin-top: 12px;">
+            <label for="jenkins-view-name">View 名稱</label>
+            <input type="text" id="jenkins-view-name" class="input" placeholder="方舟_Main_主任務" />
+          </div>
+          <button id="btn-save-jenkins" class="btn btn-primary" style="margin-top: 12px;">儲存 Jenkins 設定</button>
+        </div>
+
         <!-- App Update (Requirement: Manual Update Check) -->
         <div class="settings-section">
           <h3>App 更新</h3>
@@ -598,6 +688,7 @@
   <script src="js/merge-executor.js"></script>
   <script src="js/chained-merge.js"></script>
   <script src="js/commit-manager.js"></script>
+  <script src="js/publish-manager.js"></script>
   <script src="js/app.js"></script>
   <!-- Progress Toast Container -->
   <div id="toast-container"></div>

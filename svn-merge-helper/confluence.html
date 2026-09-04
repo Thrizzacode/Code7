@@ -1,6 +1,6 @@
 ﻿<h2 style="margin-left: 0.0px;">1. 簡介</h2>
 <p>Code7 是一款專為簡化 SVN 合併流程設計的桌面工具。它能自動識別專案路徑，協助開發者快速在 branches、qat 與 stg 三大環境之間進行代碼合併、衝突處理與工作目錄同步。</p>
-<p>✨ v1.11.x 新功能：Revision 顯示篩選器（全部 / 未合併 / 已合併三段式切換）。v1.10.x：鏈式合併（branches→QAT→STG 一次搞定，實驗性功能）。v1.9.x：AI 自動生成 Commit Message（支援 Groq / Gemini）、合併成功後自動帶入 Merged revision 訊息、合併與提交前版本落後警告，以及 Revision Picker 彈性全選模式。</p>
+<p>✨ v1.12.x 新功能：發布站點頁面（App 內直接觸發並追蹤 Jenkins pipeline，動態產生參數表單、每 3 秒輪詢建置狀態與 Console Log）。v1.11.x：Revision 顯示篩選器（全部 / 未合併 / 已合併三段式切換）。v1.10.x：鏈式合併（branches→QAT→STG 一次搞定，實驗性功能）。v1.9.x：AI 自動生成 Commit Message（支援 Groq / Gemini）、合併成功後自動帶入 Merged revision 訊息、合併與提交前版本落後警告，以及 Revision Picker 彈性全選模式。</p>
 <h2 style="margin-left: 0.0px;">2. 快速入門：首次執行</h2>
 <p>若您是第一次開啟 Code7，系統會引導您進行初始設定：</p>
 <ol>
@@ -118,10 +118,32 @@
     <strong>專案/工具管理</strong>：可手動排除批次同步專案，或指定特定的 TortoiseMerge 路徑。
   </li>
   <li>
+    <strong>✨ Jenkins 發布 (v1.12.0)</strong>：設定 Jenkins <strong>Base URL</strong>、<strong>使用者名稱</strong>、<strong>API Token</strong>（於 Jenkins 個人設定產生）與 <strong>View 名稱</strong>（預設「方舟_Main_主任務」），供「發布」頁面連線使用。
+  </li>
+  <li>
     <strong>App 更新管理</strong>：查看目前的 App 版本並手動檢查更新。
   </li>
 </ul>
-<h2 style="margin-left: 0.0px;">7. 常見問題 (FAQ)</h2>
+<h2 style="margin-left: 0.0px;">7. 發布站點 (Publish)</h2>
+<p>在頂部導覽列點擊 <strong>發布 (Publish)</strong>，即可直接在 App 內操作 Jenkins pipeline，不必開啟 Jenkins 網頁。需先於<span> </span><strong>設定 &gt; Jenkins 發布</strong><span> </span>填妥連線資訊。</p>
+<ul>
+  <li>
+    <strong>作業清單</strong>：左側自動列出設定 View 底下的所有 job（資料夾會自動過濾），並顯示上次建置的狀態色點。job 有增刪時點擊 🔄 重新整理即可同步。
+  </li>
+  <li>
+    <strong>動態參數表單</strong>：選定 job 後，依其參數定義自動產生對應欄位——下拉選單 (Choice)、核取方塊 (Boolean)、單行輸入 (String)、多行文字 (Text)，並原樣顯示每個參數的說明文字；分隔線參數 (ParameterSeparatorDefinition) 會呈現為區段標題。無參數的 job 則直接觸發建置。
+  </li>
+  <li>
+    <strong>觸發與追蹤</strong>：點擊右上角 <strong>觸發建置</strong> 後，頁面每 3 秒輪詢一次狀態，依序顯示<span> </span><strong>排隊中 → 建置中 #N → 成功／失敗</strong><span> </span>與耗時。
+  </li>
+  <li>
+    <strong>Console Log</strong>：觸發後自動展開，固定於面板底部、可獨立捲動並拖曳調整高度，新輸出會即時附加。切離發布頁時輪詢會自動停止。
+  </li>
+  <li>
+    <strong>連線注意</strong>：僅支援 basic auth（使用者 + API Token）；API Token 以明碼儲存於本機設定檔，與 AI API Key 相同。
+  </li>
+</ul>
+<h2 style="margin-left: 0.0px;">8. 常見問題 (FAQ)</h2>
 <ul>
   <li>
     <strong>Q: 為什麼顯示「載入失敗」？</strong>
@@ -136,7 +158,16 @@
     </ul>
   </li>
 </ul>
-<h2 style="margin-left: 0.0px;">8. 版本記錄 (Changelog)</h2>
+<h2 style="margin-left: 0.0px;">9. 版本記錄 (Changelog)</h2>
+<h4 style="margin-left: 0.0px;">v1.12.0 (2026-09-04)</h4>
+<ul>
+  <li>
+    <strong>【新增】發布站點頁面 (Jenkins Publish)</strong>：新增第三個主頁面「發布」，可動態列出設定 View 底下的所有 job、依 job 參數定義產生表單、觸發帶參數建置，並於頁面內每 3 秒輪詢佇列與建置狀態，自動展開可捲動的 Console Log。觸發按鈕固定於面板右上角，進度與 Console Log 固定於底部。
+  </li>
+  <li>
+    <strong>【新增】Settings「Jenkins 發布」區塊</strong>：設定 Jenkins Base URL、使用者名稱、API Token 與 View 名稱（預設「方舟_Main_主任務」）。
+  </li>
+</ul>
 <h4 style="margin-left: 0.0px;">v1.11.0 (2026-06-11)</h4>
 <ul>
   <li>
@@ -261,4 +292,4 @@
   <li>正式發布版本。</li>
 </ul>
 <hr />
-<p>(本文檔由 Code7 開發團隊維護，最後更新日期：2026-06-11)</p>
+<p>(本文檔由 Code7 開發團隊維護，最後更新日期：2026-09-04)</p>
