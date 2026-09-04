@@ -61,6 +61,7 @@ function createDefaultConfig() {
     projects: [],
     mergeToolPath: "",
     defaultPathTemplates: { ...DEFAULT_PATH_TEMPLATES },
+    showMergePreview: true,
     theme: "physicam",
     mode: "dark",
     iisSettingFilesPath: "\\\\192.168.70.17\\0-临时文件\\Code7\\SettingFiles",
@@ -121,6 +122,10 @@ const ConfigManager = {
         defaultPathTemplates: config.defaultPathTemplates || {
           ...DEFAULT_PATH_TEMPLATES,
         },
+        showMergePreview:
+          config.showMergePreview !== undefined
+            ? config.showMergePreview
+            : true,
         theme: config.theme || "physicam",
         mode: config.mode || "dark",
         iisSettingFilesPath:

@@ -63,13 +63,17 @@ const MergeExecutor = {
     const ok = await this.preMergeValidate(paths.targetWcPath);
     if (!ok) return;
 
+    // ─── Step 1.5: Dry-run preview + confirm ───
+    const previewGate = await this.previewAndConfirm(paths, revisions);
+    if (!previewGate.proceed) return;
+
     // ─── Step 2: Execute merge (+ conflict detection) ───
-    const mergeRes = await this.runMerge(paths.sourceUrl, paths.targetWcPath, revisions);
+    const mergeRes = await this.runMerge(paths.sourceUrl, paths.targetWcPath, revisions, previewGate.preview);
     if (!mergeRes.success) return;
 
     // ─── Step 3: Resolve conflicts if any ───
     if (mergeRes.conflicts.length > 0) {
-      const resolved = await this.resolveConflictsInteractive(mergeRes.conflicts, paths);
+      const resolved = await this.resolveConflictsInteractive(mergeRes.conflicts, paths, mergeRes.preview);
       if (!resolved) return;
     } else {
       Toast.success('合併成功', mergeRes.output || '所有檔案已合併');
@@ -146,13 +150,148 @@ const MergeExecutor = {
   },
 
   /**
+   * Merge preview gate. When the "show merge preview" setting is enabled, runs a
+   * dry-run merge and shows a confirmation dialog before the real merge touches
+   * the working copy. When disabled, proceeds immediately with no dialog.
+   * @param {object} paths - must include sourceUrl and targetWcPath
+   * @param {number[]} revisions
+   * @returns {Promise<{proceed:boolean, preview:(object|null)}>}
+   */
+  async previewAndConfirm(paths, revisions) {
+    const cfg = (typeof Settings !== 'undefined' && Settings.getConfig && Settings.getConfig()) || {};
+    if (cfg.showMergePreview === false) {
+      return { proceed: true, preview: null };
+    }
+
+    Toast.show('warning', '產生合併預覽...', `正在以 dry-run 分析 ${revisions.length} 筆 revision...`, 0);
+    const res = await window.svnApi.mergePreview(paths.sourceUrl, paths.targetWcPath, revisions);
+    Toast.removeByTitle('產生合併預覽...');
+
+    if (!res || !res.success) {
+      const skip = await this._promptPreviewFailure(res && res.error);
+      return { proceed: skip, preview: null };
+    }
+
+    const confirmed = await this._showPreviewDialog(res.preview);
+    return { proceed: confirmed, preview: res.preview };
+  },
+
+  /**
+   * Dialog shown when `svn merge --dry-run` itself fails. Lets the user skip the
+   * preview and merge directly, or cancel.
+   * @returns {Promise<boolean>} true = skip preview and proceed, false = cancel
+   */
+  _promptPreviewFailure(error) {
+    const errMsg = error?.message || error?.raw || '未知錯誤';
+    return new Promise((resolve) => {
+      let settled = false;
+      const done = (v) => { if (!settled) { settled = true; resolve(v); } };
+      Modal.show({
+        title: '合併預覽失敗',
+        bodyHtml: `
+          <p style="color: var(--warning); margin-bottom: var(--space-md);">無法產生合併預覽（dry-run）：</p>
+          <pre style="background: var(--bg-tertiary); padding: var(--space-md); border-radius: var(--radius-sm); font-family: var(--font-mono); font-size: 12px; color: var(--text-secondary); white-space: pre-wrap; word-break: break-all; max-height: 200px; overflow-y: auto;">${Utils.escapeHtml(errMsg)}</pre>
+          <p style="color: var(--text-muted); font-size: 12px; margin-top: var(--space-sm);">可以略過預覽直接執行合併，或取消本次合併。</p>
+        `,
+        buttons: [
+          { text: '取消', className: 'btn-ghost', onClick: () => { done(false); Modal.hide(); } },
+          { text: '略過預覽直接合併', className: 'btn-danger', onClick: () => { done(true); Modal.hide(); } }
+        ],
+        onClose: () => done(false)
+      });
+    });
+  },
+
+  /**
+   * Preview dialog listing the files a dry-run merge expects to change.
+   * @param {{updated:string[], added:string[], deleted:string[], conflicted:string[]}} preview
+   * @returns {Promise<boolean>} true = confirm and run the real merge
+   */
+  _showPreviewDialog(preview) {
+    const { updated = [], added = [], deleted = [], conflicted = [] } = preview || {};
+    const nothing = !updated.length && !added.length && !deleted.length && !conflicted.length;
+
+    const section = (label, arr, color) => arr.length
+      ? `<div style="margin-top: var(--space-sm);">
+           <strong style="color: ${color};">${label} (${arr.length})</strong>
+           <ul style="margin: var(--space-xs) 0 0; padding-left: var(--space-lg); font-family: var(--font-mono); font-size: 12px; color: var(--text-secondary);">
+             ${arr.map(f => `<li>${Utils.escapeHtml(f)}</li>`).join('')}
+           </ul>
+         </div>`
+      : '';
+
+    return new Promise((resolve) => {
+      let settled = false;
+      const done = (v) => { if (!settled) { settled = true; resolve(v); } };
+      Modal.show({
+        title: '合併預覽',
+        bodyHtml: `
+          <p style="color: var(--text-secondary); margin-bottom: var(--space-sm);">
+            預期異動：${updated.length} 更新 / ${added.length} 新增 / ${deleted.length} 刪除 / ${conflicted.length} 預期衝突
+          </p>
+          ${conflicted.length ? '<p style="color: var(--warning); font-size: 12px;">⚠ 預覽為 SVN 估算，實際衝突以合併結果為準。</p>' : ''}
+          ${nothing ? '<p style="color: var(--text-muted);">此合併預期不會有檔案異動。</p>' : ''}
+          <div style="max-height: 320px; overflow-y: auto;">
+            ${section('衝突', conflicted, 'var(--warning)')}
+            ${section('更新', updated, 'var(--text-primary)')}
+            ${section('新增', added, 'var(--success)')}
+            ${section('刪除', deleted, 'var(--error)')}
+          </div>
+        `,
+        buttons: [
+          { text: '取消', className: 'btn-ghost', onClick: () => { done(false); Modal.hide(); } },
+          { text: '確認執行合併', className: 'btn-primary', onClick: () => { done(true); Modal.hide(); } }
+        ],
+        onClose: () => done(false)
+      });
+    });
+  },
+
+  /**
+   * Abandon an uncommitted merge: recursive revert of the target working copy
+   * plus removal of the preview-identified additions that remain unversioned.
+   * Committed content is never touched.
+   * @param {string} targetWcPath
+   * @param {string[]} previewAdded - paths (relative to wc) the dry-run marked as added
+   * @returns {Promise<boolean>} true when the working copy was restored
+   */
+  async abandonAndRollback(targetWcPath, previewAdded = []) {
+    const confirmed = await Modal.confirm(
+      '放棄合併並還原',
+      '將對目標工作目錄執行 svn revert -R，捨棄本次尚未提交的合併變更，並清除合併新增的檔案。\n\n已提交的內容不受影響。確定要繼續嗎？',
+      '放棄並還原',
+      'btn-danger'
+    );
+    if (!confirmed) return false;
+
+    Toast.show('warning', '還原中...', '正在執行 svn revert -R...', 0);
+    const res = await window.svnApi.rollbackMerge(targetWcPath, previewAdded || []);
+    Toast.removeByTitle('還原中...');
+
+    if (!res || !res.success) {
+      const errMsg = res?.error?.message || res?.error?.raw || '未知錯誤';
+      Toast.error('還原失敗', `${errMsg}\n請改用 TortoiseSVN 手動還原工作目錄。`);
+      return false;
+    }
+
+    const rmN = (res.removed || []).length;
+    if (res.failedRemovals && res.failedRemovals.length > 0) {
+      Toast.warning('已還原（部分新增檔未刪除）', `工作目錄已還原；下列新增檔無法刪除：\n${res.failedRemovals.join('\n')}`);
+    } else {
+      Toast.success('已還原', `工作目錄已回到合併前狀態${rmN ? `（清除 ${rmN} 個新增檔）` : ''}。`);
+    }
+    return true;
+  },
+
+  /**
    * Execute the merge and detect conflicts.
    * @param {string} sourceUrl
    * @param {string} targetWcPath
    * @param {number[]} revisions
-   * @returns {Promise<{success:boolean, conflicts:Array, output?:string, error?:object}>}
+   * @param {object|null} preview - dry-run preview result, relayed for rollback
+   * @returns {Promise<{success:boolean, conflicts:Array, output?:string, preview:(object|null), error?:object}>}
    */
-  async runMerge(sourceUrl, targetWcPath, revisions) {
+  async runMerge(sourceUrl, targetWcPath, revisions, preview = null) {
     Toast.show('warning', '合併中...', `正在合併 ${revisions.length} 筆 revision...`, 0);
 
     const mergeResult = await window.svnApi.merge(sourceUrl, targetWcPath, revisions);
@@ -160,21 +299,49 @@ const MergeExecutor = {
     Toast.removeByTitle('合併中...');
 
     if (!mergeResult.success) {
-      this._showMergeError(mergeResult.error);
-      return { success: false, conflicts: [], error: mergeResult.error };
+      this._showMergeError(mergeResult.error, { targetWcPath, added: (preview && preview.added) || [] });
+      return { success: false, conflicts: [], preview, error: mergeResult.error };
     }
 
     const postStatus = await window.svnApi.status(targetWcPath);
     const conflicts = (postStatus.entries || []).filter(e => e.itemStatus === 'conflicted');
 
-    return { success: true, conflicts, output: mergeResult.output };
+    return { success: true, conflicts, output: mergeResult.output, preview };
   },
 
   /**
-   * Show merge error with copy button.
+   * Show merge error with copy button. When `rollbackCtx` is supplied, also
+   * offers to abandon the (partially applied) merge and revert.
+   * @param {object} error
+   * @param {{targetWcPath:string, added:string[]}|null} [rollbackCtx]
    */
-  _showMergeError(error) {
+  _showMergeError(error, rollbackCtx = null) {
     const errMsg = error?.message || error?.raw || 'Unknown error';
+
+    const buttons = [
+      {
+        text: '複製錯誤訊息',
+        className: 'btn-secondary',
+        onClick: async () => {
+          const copied = await Utils.copyToClipboard(errMsg);
+          if (copied) Toast.success('已複製', '錯誤訊息已複製到剪貼簿');
+        }
+      }
+    ];
+
+    if (rollbackCtx && rollbackCtx.targetWcPath) {
+      buttons.push({
+        text: '放棄合併並還原',
+        className: 'btn-danger',
+        onClick: async () => {
+          const done = await this.abandonAndRollback(rollbackCtx.targetWcPath, rollbackCtx.added || []);
+          if (done) Modal.hide();
+          else this._showMergeError(error, rollbackCtx);
+        }
+      });
+    }
+
+    buttons.push({ text: '關閉', className: 'btn-ghost', onClick: () => Modal.hide() });
 
     Modal.show({
       title: '合併失敗',
@@ -182,17 +349,7 @@ const MergeExecutor = {
         <p style="color: var(--error); margin-bottom: var(--space-md);">合併過程中發生錯誤：</p>
         <pre style="background: var(--bg-tertiary); padding: var(--space-md); border-radius: var(--radius-sm); font-family: var(--font-mono); font-size: 12px; color: var(--text-secondary); white-space: pre-wrap; word-break: break-all; max-height: 300px; overflow-y: auto;">${Utils.escapeHtml(errMsg)}</pre>
       `,
-      buttons: [
-        {
-          text: '複製錯誤訊息',
-          className: 'btn-secondary',
-          onClick: async () => {
-            const copied = await Utils.copyToClipboard(errMsg);
-            if (copied) Toast.success('已複製', '錯誤訊息已複製到剪貼簿');
-          }
-        },
-        { text: '關閉', className: 'btn-ghost', onClick: () => Modal.hide() }
-      ]
+      buttons
     });
   },
 
@@ -202,20 +359,37 @@ const MergeExecutor = {
    * aborts (closes the dialog or clicks "稍後再說") before resolving everything.
    * @param {Array<{path:string}>} conflicts
    * @param {object} paths - must include targetWcPath
+   * @param {object|null} preview - dry-run preview result, used for rollback cleanup
    * @returns {Promise<boolean>}
    */
-  resolveConflictsInteractive(conflicts, paths) {
+  resolveConflictsInteractive(conflicts, paths, preview = null) {
     return new Promise((resolve) => {
       let settled = false;
+
+      // Track the per-conflict status pollers started by _resolveConflict so they
+      // can all be stopped the moment this dialog is dismissed — otherwise a
+      // stale poll can see a file that is no longer conflicted (e.g. because the
+      // user chose "放棄合併並還原" and svn revert -R cleared the marker) and
+      // wrongly report it as "resolved", re-opening this dialog.
+      const pollers = new Set();
+      const stopAllPolling = () => {
+        for (const id of pollers) clearInterval(id);
+        pollers.clear();
+        Toast.removeByTitle('等待外部工具...');
+      };
+
       const settle = (value) => {
         if (settled) return;
         settled = true;
+        stopAllPolling();
         resolve(value);
       };
+      const isActive = () => !settled;
 
       const conflictItems = conflicts.map(c => ({ path: c.path, resolved: false }));
 
       const renderConflictList = () => {
+        if (settled) return; // dialog already dismissed — never re-open it
         const allResolved = conflictItems.every(c => c.resolved);
         const bodyHtml = `
           <p style="color: var(--warning); margin-bottom: var(--space-md);">
@@ -241,6 +415,15 @@ const MergeExecutor = {
               { text: '繼續', className: 'btn-primary', onClick: () => { settle(true); Modal.hide(); } }
             ]
           : [
+              {
+                text: '放棄合併並還原',
+                className: 'btn-danger',
+                onClick: async () => {
+                  const done = await MergeExecutor.abandonAndRollback(paths.targetWcPath, (preview && preview.added) || []);
+                  if (done) { settle(false); Modal.hide(); }
+                  else { renderConflictList(); }
+                }
+              },
               { text: '關閉', className: 'btn-ghost', onClick: () => { settle(false); Modal.hide(); } }
             ];
 
@@ -254,7 +437,10 @@ const MergeExecutor = {
             bodyEl.querySelectorAll('.conflict-resolve-btn').forEach(btn => {
               btn.addEventListener('click', async (e) => {
                 const idx = parseInt(e.target.dataset.index, 10);
-                await this._resolveConflict(conflictItems[idx], idx, paths.targetWcPath, renderConflictList);
+                await this._resolveConflict(conflictItems[idx], idx, paths.targetWcPath, renderConflictList, {
+                  isActive,
+                  registerPoller: (id) => pollers.add(id)
+                });
               });
             });
           }
@@ -266,9 +452,19 @@ const MergeExecutor = {
   },
 
   /**
-   * Launch external tool for a single conflict, then re-check.
+   * Launch external tool for a single conflict, then poll for its resolution.
+   * @param {{path:string, resolved:boolean}} conflictItem
+   * @param {number} index
+   * @param {string} targetWcPath
+   * @param {Function} rerenderFn
+   * @param {{isActive?: () => boolean, registerPoller?: (id:any) => void}} [ctx]
+   *   isActive gates every poll tick and the resolve/rerender — once the parent
+   *   dialog is dismissed the poller must not act (a reverted file reads as
+   *   "no longer conflicted", which is not the same as "resolved").
    */
-  async _resolveConflict(conflictItem, index, targetWcPath, rerenderFn) {
+  async _resolveConflict(conflictItem, index, targetWcPath, rerenderFn, ctx = {}) {
+    const isActive = ctx.isActive || (() => true);
+
     Toast.show('warning', '開啟外部工具...', `正在開啟 TortoiseMerge: ${conflictItem.path}`, 3000);
 
     const launchResult = await window.svnApi.launchMergeTool(conflictItem.path);
@@ -278,21 +474,25 @@ const MergeExecutor = {
       return;
     }
 
+    if (!isActive()) return;
+
     // Wait a moment, then re-check status
     Toast.show('warning', '等待外部工具...', '請在外部工具中解決衝突後關閉', 0);
 
     // Poll for conflict resolution
     const checkResolved = async () => {
+      if (!isActive()) return;
       const statusResult = await window.svnApi.status(targetWcPath);
-      if (!statusResult.success) return;
+      if (!statusResult.success || !isActive()) return;
 
       const still = (statusResult.entries || []).find(
         e => e.itemStatus === 'conflicted' && e.path === conflictItem.path
       );
 
       if (!still) {
-        // Conflict resolved — run svn resolve
+        // Conflict no longer flagged — treat as resolved in the external tool.
         await window.svnApi.resolve(conflictItem.path);
+        if (!isActive()) return;
         conflictItem.resolved = true;
         Toast.success('衝突已解決', conflictItem.path);
         Toast.removeByTitle('等待外部工具...');
@@ -301,14 +501,15 @@ const MergeExecutor = {
     };
 
     // Check after a delay, and set up periodic polling
-    setTimeout(checkResolved, 3000);
+    setTimeout(() => { if (isActive()) checkResolved(); }, 3000);
     const interval = setInterval(async () => {
-      if (conflictItem.resolved) {
+      if (conflictItem.resolved || !isActive()) {
         clearInterval(interval);
         return;
       }
       await checkResolved();
     }, 5000);
+    if (ctx.registerPoller) ctx.registerPoller(interval);
 
     // Stop polling after 5 minutes
     setTimeout(() => clearInterval(interval), 300000);

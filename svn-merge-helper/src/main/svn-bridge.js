@@ -1,4 +1,5 @@
 const { execFile, spawn } = require('child_process');
+const fs = require('fs');
 const path = require('path');
 const { XMLParser } = require('fast-xml-parser');
 
@@ -129,6 +130,59 @@ function parseListXml(xml) {
   }));
 }
 
+/**
+ * Parse `svn merge --dry-run` notification output into categorised file lists.
+ * SVN prints one line per changed path with up to four leading status columns
+ * (col 1 = content action, col 4 = tree-conflict marker), then the path.
+ * Section headers ("--- Merging ...", "--- Recording mergeinfo ...") and the
+ * "Summary of conflicts" trailer are ignored, as is the working-copy root ('.').
+ * @param {string} stdout
+ * @returns {{updated: string[], added: string[], deleted: string[], conflicted: string[], raw: string}}
+ */
+function parseMergePreview(stdout) {
+  const updated = new Set();
+  const added = new Set();
+  const deleted = new Set();
+  const conflicted = new Set();
+
+  for (const line of stdout.split(/\r?\n/)) {
+    if (!line.trim() || line.startsWith('---') || /^Summary of conflicts/.test(line)) continue;
+
+    const m = line.match(/^(.)(.)(.)(.)\s+(.+)$/);
+    if (!m) continue;
+
+    const contentCol = m[1];
+    const treeCol = m[4];
+    const file = m[5].trim();
+    if (!file || file === '.') continue;
+
+    if (treeCol === 'C' || contentCol === 'C') {
+      conflicted.add(file);
+    } else if (contentCol === 'A') {
+      added.add(file);
+    } else if (contentCol === 'D') {
+      deleted.add(file);
+    } else if (contentCol === 'U' || contentCol === 'G' || contentCol === 'M') {
+      updated.add(file);
+    }
+  }
+
+  // A conflicted file must not also be reported as a plain update/add.
+  for (const f of conflicted) {
+    updated.delete(f);
+    added.delete(f);
+    deleted.delete(f);
+  }
+
+  return {
+    updated: [...updated],
+    added: [...added],
+    deleted: [...deleted],
+    conflicted: [...conflicted],
+    raw: stdout
+  };
+}
+
 // ─── Public API ────────────────────────────────────────────────────
 
 const SvnBridge = {
@@ -240,6 +294,70 @@ const SvnBridge = {
     } catch (err) {
       return { success: false, error: err };
     }
+  },
+
+  /**
+   * Dry-run a cherry-pick merge to preview which files would change, without
+   * touching the working copy. Runs with cwd set to the target working copy and
+   * merges into '.', so notification paths are relative to the working copy root.
+   * @param {string} sourceUrl - Source SVN URL
+   * @param {string} targetWcPath - Target working copy path
+   * @param {number[]} revisions - Revision numbers to preview
+   * @returns {Promise<{success: boolean, preview?: {updated: string[], added: string[], deleted: string[], conflicted: string[], raw: string}, error?: object}>}
+   */
+  async mergePreview(sourceUrl, targetWcPath, revisions) {
+    try {
+      const args = ['merge'];
+      revisions.forEach(rev => {
+        args.push('-c', String(rev));
+      });
+      args.push('--dry-run', sourceUrl, '.');
+
+      const stdout = await execSvn(args, { timeout: 120000, cwd: targetWcPath });
+      return { success: true, preview: parseMergePreview(stdout) };
+    } catch (err) {
+      return { success: false, error: err };
+    }
+  },
+
+  /**
+   * Roll back an uncommitted merge in the target working copy: recursive revert,
+   * then delete the files the dry-run preview reported as additions that are
+   * still unversioned afterwards. Pre-existing unversioned files are left alone.
+   * @param {string} wcPath - Target working copy path
+   * @param {string[]} [addedPaths] - Paths (relative to wcPath) the preview classified as added
+   * @returns {Promise<{success: boolean, reverted: string[], removed: string[], failedRemovals: string[], error?: object}>}
+   */
+  async rollbackMerge(wcPath, addedPaths = []) {
+    const revertRes = await this.revert(wcPath, { recursive: true });
+    if (!revertRes.success) {
+      return { success: false, reverted: [], removed: [], failedRemovals: [], error: revertRes.error };
+    }
+
+    const removed = [];
+    const failedRemovals = [];
+
+    if (Array.isArray(addedPaths) && addedPaths.length > 0) {
+      const statusRes = await this.status(wcPath);
+      const unversioned = new Set(
+        (statusRes.success ? statusRes.entries : [])
+          .filter(e => e.itemStatus === 'unversioned')
+          .map(e => path.resolve(e.path))
+      );
+
+      for (const rel of addedPaths) {
+        const abs = path.resolve(wcPath, rel);
+        if (!unversioned.has(abs)) continue; // committed elsewhere, or not actually left behind
+        try {
+          fs.rmSync(abs, { force: true, recursive: true });
+          removed.push(rel);
+        } catch (_) {
+          failedRemovals.push(rel);
+        }
+      }
+    }
+
+    return { success: true, reverted: [wcPath], removed, failedRemovals };
   },
 
   /**
@@ -425,12 +543,16 @@ const SvnBridge = {
   /**
    * Revert changes in a working copy path.
    * @param {string|string[]} targetPath - Path or array of paths to revert
+   * @param {{recursive?: boolean}} [options] - recursive:true adds -R for a full subtree revert
    * @returns {Promise<{success: boolean, output?: string, error?: object}>}
    */
-  async revert(targetPath) {
+  async revert(targetPath, options = {}) {
     try {
       const paths = Array.isArray(targetPath) ? targetPath : [targetPath];
-      const stdout = await execSvn(['revert', ...paths], { timeout: 60000 });
+      const args = ['revert'];
+      if (options && options.recursive) args.push('-R');
+      args.push(...paths);
+      const stdout = await execSvn(args, { timeout: 60000 });
       return { success: true, output: stdout };
     } catch (err) {
       return { success: false, error: err };

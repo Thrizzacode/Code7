@@ -265,12 +265,17 @@ const ChainedMerge = {
 
       Toast.info(`鏈式合併 ${i + 1}/${stages.length}`, stage.label, 3000);
 
-      const mergeRes = await MergeExecutor.runMerge(stage.sourceUrl, stage.targetWcPath, revisions);
-      if (!mergeRes.success) return this._haltAt(i, stages, '合併失敗');
+      // Dry-run preview + confirm for this stage (honours the same setting).
+      const previewGate = await MergeExecutor.previewAndConfirm(stage.paths, revisions);
+      if (!previewGate.proceed) return this._haltAt(i, stages, '合併預覽已取消');
+
+      const mergeRes = await MergeExecutor.runMerge(stage.sourceUrl, stage.targetWcPath, revisions, previewGate.preview);
+      const stageRollback = () => ({ targetWcPath: stage.targetWcPath, added: (mergeRes.preview && mergeRes.preview.added) || [] });
+      if (!mergeRes.success) return this._haltAt(i, stages, '合併失敗', false, stageRollback());
 
       if (mergeRes.conflicts.length > 0) {
-        const resolved = await MergeExecutor.resolveConflictsInteractive(mergeRes.conflicts, stage.paths);
-        if (!resolved) return this._haltAt(i, stages, '衝突未解決或已取消');
+        const resolved = await MergeExecutor.resolveConflictsInteractive(mergeRes.conflicts, stage.paths, mergeRes.preview);
+        if (!resolved) return this._haltAt(i, stages, '衝突未解決或已取消', false, stageRollback());
       }
 
       MergeContext.set(stage.sourceUrl, revisions, `${stage.paths.sourceEnv}/${stage.paths.sourceVersion}`);
@@ -280,7 +285,7 @@ const ChainedMerge = {
         return this._haltAt(i, stages, '本站合併後無變更，無法接續後續階段', true);
       }
       if (!commitRes.committed) {
-        return this._haltAt(i, stages, '提交已取消');
+        return this._haltAt(i, stages, '提交已取消', false, stageRollback());
       }
       prevCommitRev = commitRes.revision;
 
@@ -299,8 +304,12 @@ const ChainedMerge = {
    * @param {Array<object>} stages
    * @param {string} reason
    * @param {boolean} [info] - whether this is an informational stop, not an error
+   * @param {{targetWcPath:string, added:string[]}|null} [rollbackCtx] - present only
+   *   when the current (stopped) stage's merge modified its working copy but was
+   *   not committed; enables a "roll back this stage" action. Committed stages
+   *   are never passed here.
    */
-  _haltAt(stageIndex, stages, reason, info = false) {
+  _haltAt(stageIndex, stages, reason, info = false, rollbackCtx = null) {
     const completed = stages.slice(0, stageIndex).map(s => s.label);
     const stopped = stages[stageIndex].label;
 
@@ -310,10 +319,23 @@ const ChainedMerge = {
 
     const body = `${completedText}停在：${stopped}\n原因：${reason}\n\n已提交的階段保留不變，可稍後從該階段接續。`;
 
+    const buttons = [];
+    if (rollbackCtx && rollbackCtx.targetWcPath) {
+      buttons.push({
+        text: '還原本站',
+        className: 'btn-danger',
+        onClick: async () => {
+          const done = await MergeExecutor.abandonAndRollback(rollbackCtx.targetWcPath, rollbackCtx.added || []);
+          if (done) Modal.hide();
+        }
+      });
+    }
+    buttons.push({ text: '了解', className: 'btn-primary', onClick: () => Modal.hide() });
+
     Modal.show({
       title: info ? '鏈式合併結束' : '鏈式合併已中止',
       bodyHtml: `<p style="color: var(--text-secondary); line-height: 1.6; white-space: pre-wrap; word-break: break-all;">${Utils.escapeHtml(body)}</p>`,
-      buttons: [{ text: '了解', className: 'btn-primary', onClick: () => Modal.hide() }]
+      buttons
     });
 
     this._reloadAfter(stages[0]);

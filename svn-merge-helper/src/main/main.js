@@ -73,6 +73,17 @@ function registerIpcHandlers() {
     },
   );
 
+  ipcMain.handle(
+    "svn:merge-preview",
+    async (_event, sourceUrl, targetWcPath, revisions) => {
+      return SvnBridge.mergePreview(sourceUrl, targetWcPath, revisions);
+    },
+  );
+
+  ipcMain.handle("svn:rollback-merge", async (_event, wcPath, addedPaths) => {
+    return SvnBridge.rollbackMerge(wcPath, addedPaths);
+  });
+
   ipcMain.handle("svn:commit", async (_event, wcPath, message, filesArray) => {
     return SvnBridge.commit(wcPath, message, filesArray);
   });
@@ -89,8 +100,8 @@ function registerIpcHandlers() {
     return SvnBridge.update(wcPath);
   });
 
-  ipcMain.handle("svn:revert", async (_event, targetPath) => {
-    return SvnBridge.revert(targetPath);
+  ipcMain.handle("svn:revert", async (_event, targetPath, options) => {
+    return SvnBridge.revert(targetPath, options);
   });
 
   ipcMain.handle("svn:ensure-local-path", async (_event, wcPath) => {

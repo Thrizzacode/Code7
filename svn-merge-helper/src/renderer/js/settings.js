@@ -41,6 +41,18 @@ const Settings = {
       this.saveMergeTool(),
     );
 
+    // 合併前顯示預覽 — persist immediately on toggle
+    const previewToggle = Utils.$("setting-show-merge-preview");
+    if (previewToggle) {
+      previewToggle.addEventListener("change", async (e) => {
+        this._config.showMergePreview = e.target.checked;
+        const result = await window.svnApi.saveConfig(this._config);
+        if (!result.success) {
+          Toast.error("儲存失敗", result.error);
+        }
+      });
+    }
+
     // IIS Version Switcher
     this.initIisSwitcher();
 
@@ -392,6 +404,11 @@ type 規則（只能選一個）：
   open() {
     this.renderProjectsList();
     Utils.$("merge-tool-path").value = this._config.mergeToolPath || "";
+
+    const previewToggle = Utils.$("setting-show-merge-preview");
+    if (previewToggle) {
+      previewToggle.checked = this._config.showMergePreview !== false;
+    }
 
     // Team Default Path
     const TEAM_DEFAULT_PATH =

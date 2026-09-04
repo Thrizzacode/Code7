@@ -542,6 +542,12 @@
             <input type="text" id="merge-tool-path" class="input" placeholder="自動偵測或手動輸入..." />
             <button id="btn-detect-merge-tool" class="btn btn-sm btn-secondary">自動偵測</button>
           </div>
+          <div class="form-group">
+            <label class="project-batch-toggle" title="合併前先以 svn merge --dry-run 顯示預期異動與衝突">
+              <input type="checkbox" id="setting-show-merge-preview" />
+              <span>合併前顯示預覽</span>
+            </label>
+          </div>
           <button id="btn-save-merge-tool" class="btn btn-primary">儲存工具設定</button>
         </div>
 
