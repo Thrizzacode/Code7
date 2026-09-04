@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.13.1] - 2026-09-04
+
+### Fixed
+- **提交頁遺漏純屬性變更**：`svn status` 中內容為 `normal` 但屬性為 `modified` 的項目（合併後留在目錄上的 `svn:mergeinfo` 最常見）被提交頁過濾掉，導致合併結果無法在 App 內提交、且與合併預檢的「有未提交的修改」提示不一致。現在這類項目會以「屬性」標籤顯示，可勾選、比對差異與還原。
+- **選擇性提交改用 `--depth empty`**：提交指定路徑時加上 `--depth empty`，避免勾選一個目錄（例如只有 `svn:mergeinfo` 變更的資料夾）時遞迴掃入其底下未勾選的修改；新增中的目錄仍維持遞迴提交以帶入內容。
+
 ## [1.13.0] - 2026-09-04
 
 ### Added

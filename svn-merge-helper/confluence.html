@@ -1,6 +1,6 @@
 ﻿<h2 style="margin-left: 0.0px;">1. 簡介</h2>
 <p>Code7 是一款專為簡化 SVN 合併流程設計的桌面工具。它能自動識別專案路徑，協助開發者快速在 branches、qat 與 stg 三大環境之間進行代碼合併、衝突處理與工作目錄同步。</p>
-<p>✨ v1.13.x 新功能：合併預覽（執行合併前先以 svn merge --dry-run 列出預期異動與衝突，確認後才動工，可於設定關閉）、合併失敗或中止時一鍵「放棄合併並還原」尚未提交的變更。v1.12.x：發布站點頁面（App 內直接觸發並追蹤 Jenkins pipeline，動態產生參數表單、每 3 秒輪詢建置狀態與 Console Log）。v1.11.x：Revision 顯示篩選器（全部 / 未合併 / 已合併三段式切換）。v1.10.x：鏈式合併（branches→QAT→STG 一次搞定，實驗性功能）。v1.9.x：AI 自動生成 Commit Message（支援 Groq / Gemini）、合併成功後自動帶入 Merged revision 訊息、合併與提交前版本落後警告，以及 Revision Picker 彈性全選模式。</p>
+<p>✨ v1.13.x 新功能：合併預覽（執行合併前先以 svn merge --dry-run 列出預期異動與衝突，確認後才動工，可於設定關閉）、合併失敗或中止時一鍵「放棄合併並還原」尚未提交的變更；v1.13.1 修正提交頁遺漏純屬性變更（合併後的 svn:mergeinfo）的問題。v1.12.x：發布站點頁面（App 內直接觸發並追蹤 Jenkins pipeline，動態產生參數表單、每 3 秒輪詢建置狀態與 Console Log）。v1.11.x：Revision 顯示篩選器（全部 / 未合併 / 已合併三段式切換）。v1.10.x：鏈式合併（branches→QAT→STG 一次搞定，實驗性功能）。v1.9.x：AI 自動生成 Commit Message（支援 Groq / Gemini）、合併成功後自動帶入 Merged revision 訊息、合併與提交前版本落後警告，以及 Revision Picker 彈性全選模式。</p>
 <h2 style="margin-left: 0.0px;">2. 快速入門：首次執行</h2>
 <p>若您是第一次開啟 Code7，系統會引導您進行初始設定：</p>
 <ol>
@@ -61,7 +61,7 @@
 <p>如果您需要單獨處理某個環境的檔案提交（非合併流程），請切換至<span> </span> <strong>「提交 (Commit)」</strong> <span> </span>分頁：</p>
 <ol>
   <li>
-    <strong>掃描變更</strong>：選擇環境與版本後，App 會自動顯示工作區所有變更檔案（修改、新增、刪除、衝突）。
+    <strong>掃描變更</strong>：選擇環境與版本後，App 會自動顯示工作區所有變更檔案（修改、新增、刪除、衝突）。純屬性變更（例如合併後留在目錄上的 <code>svn:mergeinfo</code>）會以「屬性」標籤列出，同樣可勾選、比對差異與還原（v1.13.1）。
   </li>
   <li>
     <strong>檔案預覽</strong>：<strong>「快點兩下」</strong> <span> </span>檔案或是點擊右側圖示，可直接開啟<span> </span>
@@ -162,6 +162,15 @@
   </li>
 </ul>
 <h2 style="margin-left: 0.0px;">9. 版本記錄 (Changelog)</h2>
+<h4 style="margin-left: 0.0px;">v1.13.1 (2026-09-04)</h4>
+<ul>
+  <li>
+    <strong>【修正】提交頁遺漏純屬性變更</strong>：<code>svn status</code> 中內容為 <code>normal</code> 但屬性為 <code>modified</code> 的項目（合併後留在目錄上的 <code>svn:mergeinfo</code> 最常見）被提交頁過濾掉，導致合併結果無法在 App 內提交、且與合併預檢提示不一致。現在會以「屬性」標籤顯示，可勾選、比對差異與還原。
+  </li>
+  <li>
+    <strong>【修正】選擇性提交改用 <code>--depth empty</code></strong>：提交指定路徑時加上 <code>--depth empty</code>，避免勾選單一目錄時遞迴掃入其底下未勾選的修改；新增中的目錄仍維持遞迴提交以帶入內容。
+  </li>
+</ul>
 <h4 style="margin-left: 0.0px;">v1.13.0 (2026-09-04)</h4>
 <ul>
   <li>

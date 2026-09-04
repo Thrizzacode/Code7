@@ -94,6 +94,21 @@ const CommitManager = {
   },
 
   /**
+   * Resolve the status a row should behave as. A path with no content change
+   * but a modified/conflicted property (item 'normal'/'none') is treated as a
+   * regular modification so it can be selected, diffed, reverted and committed.
+   * @param {{itemStatus: string, propsStatus: string}} entry
+   * @returns {string}
+   */
+  _effectiveStatus(entry) {
+    if ((entry.itemStatus === 'normal' || entry.itemStatus === 'none') &&
+        (entry.propsStatus === 'modified' || entry.propsStatus === 'conflicted')) {
+      return entry.propsStatus === 'conflicted' ? 'conflicted' : 'modified';
+    }
+    return entry.itemStatus;
+  },
+
+  /**
    * Called by BranchSelector when commit path changes.
    */
   onSelectionChange(newWcPath) {
@@ -143,9 +158,11 @@ const CommitManager = {
       }
       this.currentStatusEntries = [];
     } else {
-      // Filter out 'none' or 'normal' statuses
-      this.currentStatusEntries = result.entries.filter(e => 
-          e.itemStatus !== 'none' && e.itemStatus !== 'normal'
+      // Keep entries with a content change, a property-only change (e.g.
+      // svn:mergeinfo on a directory after a merge), or unversioned files.
+      this.currentStatusEntries = result.entries.filter(e =>
+          (e.itemStatus !== 'none' && e.itemStatus !== 'normal') ||
+          e.propsStatus === 'modified' || e.propsStatus === 'conflicted'
       );
     }
     
@@ -166,32 +183,36 @@ const CommitManager = {
 
       visibleCount++;
       const tr = document.createElement('tr');
-      
+
+      const effStatus = this._effectiveStatus(entry);
+      const isPropOnly = effStatus !== entry.itemStatus;
+
       let badgeClass = 'badge-secondary';
-      let statusLabel = entry.itemStatus;
-      
-      if (entry.itemStatus === 'modified') { badgeClass = 'badge-primary'; statusLabel = '修改';}
-      else if (entry.itemStatus === 'added') { badgeClass = 'badge-success'; statusLabel = '新增';}
-      else if (entry.itemStatus === 'deleted') { badgeClass = 'badge-danger'; statusLabel = '刪除';}
-      else if (entry.itemStatus === 'unversioned') { badgeClass = 'badge-warning'; statusLabel = '未追蹤';}
-      else if (entry.itemStatus === 'conflicted') { badgeClass = 'badge-danger'; statusLabel = '衝突';}
+      let statusLabel = effStatus;
+
+      if (isPropOnly) { badgeClass = 'badge-primary'; statusLabel = '屬性';}
+      else if (effStatus === 'modified') { badgeClass = 'badge-primary'; statusLabel = '修改';}
+      else if (effStatus === 'added') { badgeClass = 'badge-success'; statusLabel = '新增';}
+      else if (effStatus === 'deleted') { badgeClass = 'badge-danger'; statusLabel = '刪除';}
+      else if (effStatus === 'unversioned') { badgeClass = 'badge-warning'; statusLabel = '未追蹤';}
+      else if (effStatus === 'conflicted') { badgeClass = 'badge-danger'; statusLabel = '衝突';}
 
       let actionBtnHTML = '';
       let actionType = '';
       let revertBtnHTML = '';
 
       // Only show revert for versioned items that have modifications or are missing/deleted
-      if (['modified', 'conflicted', 'deleted', 'added', 'missing'].includes(entry.itemStatus)) {
+      if (['modified', 'conflicted', 'deleted', 'added', 'missing'].includes(effStatus)) {
         revertBtnHTML = '<button class="btn btn-sm btn-action revert-btn" title="還原變更 (Revert)" style="padding: 2px 6px; background: transparent; border: none; cursor: pointer; border-radius: 4px;">↩️</button>';
       }
 
-      if (entry.itemStatus === 'conflicted') {
+      if (effStatus === 'conflicted') {
         actionBtnHTML = '<button class="btn btn-sm btn-action preview-btn" title="解決衝突 (TortoiseMerge) / 支援快點兩下" style="padding: 2px 6px; background: transparent; border: none; cursor: pointer; border-radius: 4px;">🔀</button>';
         actionType = 'merge';
-      } else if (['modified', 'deleted'].includes(entry.itemStatus)) {
+      } else if (['modified', 'deleted'].includes(effStatus)) {
         actionBtnHTML = '<button class="btn btn-sm btn-action preview-btn" title="比對差異 (Diff) / 支援快點兩下" style="padding: 2px 6px; background: transparent; border: none; cursor: pointer; border-radius: 4px;">🔍</button>';
         actionType = 'diff';
-      } else if (['added', 'unversioned'].includes(entry.itemStatus)) {
+      } else if (['added', 'unversioned'].includes(effStatus)) {
         actionBtnHTML = '<button class="btn btn-sm btn-action preview-btn" title="開啟檔案 (Open) / 支援快點兩下" style="padding: 2px 6px; background: transparent; border: none; cursor: pointer; border-radius: 4px;">📝</button>';
         actionType = 'open';
       }
@@ -207,7 +228,7 @@ const CommitManager = {
         <td style="padding-left: 16px;">
           <input type="checkbox" class="commit-file-checkbox" value="${Utils.escapeHtml(entry.path)}" />
         </td>
-        <td><span class="badge ${badgeClass}">${statusLabel}</span></td>
+        <td><span class="badge ${badgeClass}" style="white-space: nowrap;"${isPropOnly ? ' title="僅屬性變更 (例如 svn:mergeinfo)"' : ''}>${statusLabel}</span></td>
         <td class="path-cell" title="${entry.path}">${this._getRelativePath(entry.path)}</td>
         <td style="text-align: right; padding-right: 16px;">
           <div style="display: flex; gap: 4px; justify-content: flex-end; align-items: center;">
@@ -373,8 +394,9 @@ const CommitManager = {
     
     // Case-insensitive comparison for Windows paths
     if (normAbs.toLowerCase().startsWith(normWc.toLowerCase())) {
-      let rel = normAbs.substring(normWc.length);
-      return rel.replace(/^[\\\/]+/, '');
+      let rel = normAbs.substring(normWc.length).replace(/^[\\\/]+/, '');
+      // Entry is the working-copy root itself (e.g. a directory property change)
+      return rel || '.';
     }
     
     return normAbs;
@@ -492,7 +514,7 @@ const CommitManager = {
 
     const entries = this.currentStatusEntries
       .filter(e => this.selectedFiles.has(e.path))
-      .map(e => ({ path: e.path, itemStatus: e.itemStatus }));
+      .map(e => ({ path: e.path, itemStatus: this._effectiveStatus(e) }));
 
     const btnAiGenerate = Utils.$('btn-ai-generate');
     const originalText = '✨ AI 生成';

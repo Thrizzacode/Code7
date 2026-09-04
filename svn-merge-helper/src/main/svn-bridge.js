@@ -372,18 +372,37 @@ const SvnBridge = {
       if (filesArray && filesArray.length > 0) {
         // Find unversioned files and add them
         const statusRes = await this.status(wcPath);
+        let unversionedPaths = [];
         if (statusRes.success && statusRes.entries) {
-          const unversionedPaths = statusRes.entries
+          unversionedPaths = statusRes.entries
             .filter(e => e.itemStatus === 'unversioned')
             .map(e => e.path);
-          
+
           const toAdd = filesArray.filter(f => unversionedPaths.includes(f));
           if (toAdd.length > 0) {
              await execSvn(['add', ...toAdd], { timeout: 60000 });
           }
         }
-        
-        const args = ['commit', '-m', message, ...filesArray];
+
+        // --depth empty: commit exactly the paths the user selected. Without it,
+        // a directory target (e.g. a folder whose only change is svn:mergeinfo)
+        // would recursively sweep in unselected modifications of its children.
+        // Exception: a newly-added directory (scheduled add, or an unversioned
+        // dir just added above) must stay recursive so its contents commit too.
+        const recursivePaths = new Set([
+          ...(statusRes.entries || [])
+            .filter(e => e.itemStatus === 'added')
+            .map(e => e.path),
+          ...unversionedPaths
+        ]);
+        const hasAddedDir = filesArray.some(f => {
+          if (!recursivePaths.has(f)) return false;
+          try { return fs.statSync(f).isDirectory(); } catch (_) { return false; }
+        });
+
+        const args = ['commit'];
+        if (!hasAddedDir) args.push('--depth', 'empty');
+        args.push('-m', message, ...filesArray);
         const stdout = await execSvn(args, { timeout: 120000 });
         const match = stdout.match(/Committed revision (\d+)/i);
         const revision = match ? parseInt(match[1], 10) : null;
