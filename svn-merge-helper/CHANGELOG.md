@@ -12,6 +12,10 @@ All notable changes to this project will be documented in this file.
 ### Changed
 - **Settings 新增「合併前顯示預覽」開關**：位於「外部合併工具」區塊，切換即時寫回 `config.json`。
 
+### Fixed
+- **TortoiseMerge 解衝突未帶入三方路徑**：`svn info --xml` 的 `<conflict>` 節點位置判斷錯誤（SVN 1.8+ 放在 `<entry>` 底下而非 `<wc-info>`），導致 `_getConflictFiles()` 一律回傳 null、開啟 TortoiseMerge 時只有 Base file 有值。現已正確帶入 base／theirs／mine。
+- **衝突對話框關閉後背景輪詢未停止**：關閉衝突對話框（含「放棄合併並還原」）後，逐檔狀態輪詢會一併停止，不再因 `svn revert -R` 清掉衝突標記而被誤判為「已解決」並重新開啟對話框。
+
 ## [1.12.0] - 2026-09-04
 
 ### Added

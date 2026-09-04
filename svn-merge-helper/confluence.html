@@ -1,6 +1,6 @@
 ﻿<h2 style="margin-left: 0.0px;">1. 簡介</h2>
 <p>Code7 是一款專為簡化 SVN 合併流程設計的桌面工具。它能自動識別專案路徑，協助開發者快速在 branches、qat 與 stg 三大環境之間進行代碼合併、衝突處理與工作目錄同步。</p>
-<p>✨ v1.12.x 新功能：發布站點頁面（App 內直接觸發並追蹤 Jenkins pipeline，動態產生參數表單、每 3 秒輪詢建置狀態與 Console Log）。v1.11.x：Revision 顯示篩選器（全部 / 未合併 / 已合併三段式切換）。v1.10.x：鏈式合併（branches→QAT→STG 一次搞定，實驗性功能）。v1.9.x：AI 自動生成 Commit Message（支援 Groq / Gemini）、合併成功後自動帶入 Merged revision 訊息、合併與提交前版本落後警告，以及 Revision Picker 彈性全選模式。</p>
+<p>✨ v1.13.x 新功能：合併預覽（執行合併前先以 svn merge --dry-run 列出預期異動與衝突，確認後才動工，可於設定關閉）、合併失敗或中止時一鍵「放棄合併並還原」尚未提交的變更。v1.12.x：發布站點頁面（App 內直接觸發並追蹤 Jenkins pipeline，動態產生參數表單、每 3 秒輪詢建置狀態與 Console Log）。v1.11.x：Revision 顯示篩選器（全部 / 未合併 / 已合併三段式切換）。v1.10.x：鏈式合併（branches→QAT→STG 一次搞定，實驗性功能）。v1.9.x：AI 自動生成 Commit Message（支援 Groq / Gemini）、合併成功後自動帶入 Merged revision 訊息、合併與提交前版本落後警告，以及 Revision Picker 彈性全選模式。</p>
 <h2 style="margin-left: 0.0px;">2. 快速入門：首次執行</h2>
 <p>若您是第一次開啟 Code7，系統會引導您進行初始設定：</p>
 <ol>
@@ -41,6 +41,9 @@
   </li>
   <li>點擊下方的 「執行合併 (Merge)」。系統會先檢查本地版本是否落後伺服器 HEAD，若落後會要求確認再繼續。</li>
   <li>
+    <strong>✨ 合併預覽 (v1.13.0)</strong>：預設會在真正合併前先跑 <code>svn merge --dry-run</code>，以對話框列出預期的更新／新增／刪除／衝突檔案清單，確認後才實際套用；可於<span> </span><strong>設定 &gt; 外部合併工具 &gt;「合併前顯示預覽」</strong><span> </span>關閉。鏈式合併每一站都會套用。
+  </li>
+  <li>
     <strong>🔗 鏈式合併（實驗性）</strong>：當來源為 <code>branches</code>、目標為 <code>qat</code> 時，勾選「🔗 鏈式合併」並選擇 STG 版本，系統會在 branches→QAT 合併完成後，自動接續執行 QAT→STG 合併，一次流程完成雙段合併。
   </li>
   <li>
@@ -49,7 +52,7 @@
         <strong>無衝突 (Success)</strong>：提示成功，並自動從 SVN Log 組合 <code>Merged revision(s) ... from ...</code> 格式的 Commit Message 帶入提交欄位，可直接點擊「提交 (Commit)」完成。
       </li>
       <li>
-        <strong>有衝突 (Conflict)</strong>：彈出衝突清單，點擊「使用外部工具解決」開啟 TortoiseMerge。
+        <strong>有衝突 (Conflict)</strong>：彈出衝突清單，點擊「使用外部工具解決」開啟 TortoiseMerge（會自動帶入 base／theirs／mine 三方檔案）。若中途不想解了，可點擊<span> </span><strong>「放棄合併並還原」</strong><span> </span>，系統會對尚未提交的工作目錄執行 <code>svn revert -R</code> 並清除本次合併新增的檔案，回到合併前狀態（v1.13.0）。
       </li>
     </ul>
   </li>
@@ -115,7 +118,7 @@
     <strong>佈景主題切換</strong>：提供 PHYSICAM (紅)、TECHNOLOM (藍) 等 5 種風格色彩，並支援<span> </span> <strong>深淺色模式</strong>。
   </li>
   <li>
-    <strong>專案/工具管理</strong>：可手動排除批次同步專案，或指定特定的 TortoiseMerge 路徑。
+    <strong>專案/工具管理</strong>：可手動排除批次同步專案，或指定特定的 TortoiseMerge 路徑。此區塊另提供<span> </span><strong>「合併前顯示預覽」</strong><span> </span>開關（v1.13.0，預設開啟）。
   </li>
   <li>
     <strong>✨ Jenkins 發布 (v1.12.0)</strong>：設定 Jenkins <strong>Base URL</strong>、<strong>使用者名稱</strong>、<strong>API Token</strong>（於 Jenkins 個人設定產生）與 <strong>View 名稱</strong>（預設「方舟_Main_主任務」），供「發布」頁面連線使用。
@@ -159,6 +162,21 @@
   </li>
 </ul>
 <h2 style="margin-left: 0.0px;">9. 版本記錄 (Changelog)</h2>
+<h4 style="margin-left: 0.0px;">v1.13.0 (2026-09-04)</h4>
+<ul>
+  <li>
+    <strong>【新增】合併預覽 (Merge Preview)</strong>：單段與鏈式合併每一站在真正執行前，先跑 <code>svn merge --dry-run</code>，以對話框列出預期的更新／新增／刪除／衝突檔案清單與數量，確認後才動工。可於<span> </span><strong>設定 &gt; 外部合併工具 &gt;「合併前顯示預覽」</strong><span> </span>開關關閉（預設開啟）。
+  </li>
+  <li>
+    <strong>【新增】合併失敗／中止自動回退</strong>：merge 指令失敗、或衝突未解完就中止時，對話框提供「放棄合併並還原」，對尚未提交的目標工作目錄執行 <code>svn revert -R</code> 並清除本次合併新增且仍未追蹤的檔案。鏈式合併僅還原當前未提交站，已提交站不受影響。
+  </li>
+  <li>
+    <strong>【修正】TortoiseMerge 解衝突未帶入三方路徑</strong>：<code>svn info --xml</code> 的 <code>&lt;conflict&gt;</code> 節點位置判斷錯誤，導致開啟 TortoiseMerge 時只有 base 欄位有值。現已正確帶入 base／theirs／mine。
+  </li>
+  <li>
+    <strong>【修正】衝突對話框關閉後背景輪詢未停止</strong>：關閉衝突對話框（含「放棄合併並還原」）後，狀態輪詢會一併停止，不再因 revert 清掉衝突標記而誤判為「已解決」重開對話框。
+  </li>
+</ul>
 <h4 style="margin-left: 0.0px;">v1.12.0 (2026-09-04)</h4>
 <ul>
   <li>
