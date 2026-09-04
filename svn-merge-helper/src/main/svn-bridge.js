@@ -333,19 +333,26 @@ const SvnBridge = {
 
   /**
    * Retrieve SVN conflict file paths for a conflicted file via `svn info --xml`.
-   * Returns { base, theirs, mine } relative paths resolved to absolute paths,
-   * or null if the file has no conflict info.
+   * Returns { base, theirs, mine } absolute paths, or null if the file has no
+   * conflict info. For tree conflicts the three fields are null (no text-conflict
+   * files exist), and the caller falls back to opening the file directly.
+   *
+   * NOTE: in `svn info --xml` (SVN 1.8+) the <conflict> element is a direct child
+   * of <entry>, not nested under <wc-info>. The <wc-info> lookup is kept only as
+   * a fallback for hypothetical older layouts.
    */
   async _getConflictFiles(filePath) {
     try {
       const xml = await execSvn(['info', '--xml', filePath]);
       const parsed = xmlParser.parse(xml);
       const entry = parsed?.info?.entry;
-      const conflict = entry?.['wc-info']?.conflict;
+      const conflict = entry?.conflict ?? entry?.['wc-info']?.conflict;
       if (!conflict) return null;
 
       const dir = path.dirname(filePath);
-      const resolve = (p) => (p ? path.resolve(dir, p) : null);
+      // SVN reports absolute paths here; path.resolve is a no-op on those and
+      // still handles the bare-filename form that older SVN emitted.
+      const resolve = (p) => (p ? path.resolve(dir, String(p)) : null);
 
       return {
         base:   resolve(conflict['prev-base-file']),

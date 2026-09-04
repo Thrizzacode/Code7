@@ -9,16 +9,24 @@ const { EventEmitter } = require('events');
 
 // ─── SVN XML fixtures ────────────────────────────────────────────────────────
 
+// Real `svn info --xml` layout (SVN 1.8+): <conflict> is a direct child of
+// <entry>, NOT nested under <wc-info>. It carries operation/type attributes and
+// <version> children for the two sides of the conflict.
 const WITH_CONFLICT_XML = `<?xml version="1.0" encoding="UTF-8"?>
 <info>
 <entry kind="file" path="C:\\repo\\src\\app.js" revision="456">
 <wc-info>
-  <conflict>
-    <prev-base-file>app.js.r123</prev-base-file>
-    <cur-base-file>app.js.r456</cur-base-file>
-    <prev-wc-file>app.js.mine</prev-wc-file>
-  </conflict>
+<wcroot-abspath>C:/repo</wcroot-abspath>
+<schedule>normal</schedule>
+<depth>infinity</depth>
 </wc-info>
+<conflict operation="update" type="text">
+<version kind="file" path-in-repos="src/app.js" revision="123" side="source-left"/>
+<version kind="file" path-in-repos="src/app.js" revision="456" side="source-right"/>
+<prev-base-file>app.js.r123</prev-base-file>
+<prev-wc-file>app.js.mine</prev-wc-file>
+<cur-base-file>app.js.r456</cur-base-file>
+</conflict>
 </entry>
 </info>`;
 
@@ -27,6 +35,19 @@ const NO_CONFLICT_XML = `<?xml version="1.0" encoding="UTF-8"?>
 <entry kind="file" path="C:\\repo\\src\\app.js" revision="456">
 <wc-info>
 </wc-info>
+</entry>
+</info>`;
+
+// Tree conflict: <conflict> present but without the text-conflict file elements.
+const TREE_CONFLICT_XML = `<?xml version="1.0" encoding="UTF-8"?>
+<info>
+<entry kind="file" path="C:\\repo\\src\\app.js" revision="456">
+<wc-info>
+</wc-info>
+<conflict operation="merge" type="tree">
+<version kind="file" path-in-repos="src/app.js" revision="123" side="source-left"/>
+<version kind="none" revision="456" side="source-right"/>
+</conflict>
 </entry>
 </info>`;
 
@@ -110,6 +131,13 @@ async function run() {
   const r2 = await SvnBridge._getConflictFiles(FILE_PATH);
   assert(r2 === null, '回傳 null');
 
+  // ── 2b. 樹狀衝突 → conflict 存在但無文字衝突檔 → base/theirs/mine 為 null ──
+  console.log('\n[2b] _getConflictFiles — 樹狀衝突');
+  reset(); svnXmlResponse = TREE_CONFLICT_XML;
+  const r2b = await SvnBridge._getConflictFiles(FILE_PATH);
+  assert(r2b !== null, 'conflict 節點存在 → 回傳物件');
+  assert(r2b?.base === null && r2b?.theirs === null && r2b?.mine === null, 'base/theirs/mine 皆為 null');
+
   // ── 3. SVN 指令失敗 → 安全回傳 null，不拋例外 ───────────────────────────
   console.log('\n[3] _getConflictFiles — SVN 指令失敗');
   reset(); svnShouldFail = true;
@@ -146,6 +174,13 @@ async function run() {
   await SvnBridge.launchExternalTool(TOOL_PATH, FILE_PATH);
   const args6 = spawnCalls[0]?.args ?? [];
   assert(args6.length === 1 && args6[0] === FILE_PATH, 'SVN 失敗時仍以 fallback 啟動工具');
+
+  // ── 7. launchExternalTool — 樹狀衝突 → fallback 只傳 filePath ────────────
+  console.log('\n[7] launchExternalTool — 樹狀衝突 (fallback)');
+  reset(); svnXmlResponse = TREE_CONFLICT_XML;
+  await SvnBridge.launchExternalTool(TOOL_PATH, FILE_PATH);
+  const args7 = spawnCalls[0]?.args ?? [];
+  assert(args7.length === 1 && args7[0] === FILE_PATH, '樹狀衝突無文字衝突檔 → fallback');
 
   // ─── Summary ──────────────────────────────────────────────────────────────
   console.log(`\n${'─'.repeat(45)}`);
